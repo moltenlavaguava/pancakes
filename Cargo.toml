@@ -5,8 +5,13 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1.0.102"
+async-trait = "0.1.89"
+chrono = {version = "0.4.44", features = ["serde"]}
 futures = "0.3.32"
 iced = {version = "0.14.0", features = ["tokio", "debug"]}
 reqwest = "0.13.2"
+serde = "1.0.228"
 serde_json = "1.0.149"
 tokio = {version = "1.49", features = ["full"]}
+tokio-util = "0.7.18"
+url = "2.5.8"

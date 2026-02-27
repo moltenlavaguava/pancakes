@@ -1,3 +1,13 @@
+use std::collections::HashMap;
+
+use crate::service::{
+    gui::{enums::EventMessage, message::Message, sync::ReceiverHandle},
+    request::{
+        RequestSender,
+        structs::{PythonReleaseData, Release},
+    },
+};
+
 #[derive(Clone)]
 pub struct Counter {
     n: u64,
@@ -29,4 +39,18 @@ impl IdCounter {
     pub fn next(&mut self) -> TaskId {
         TaskId(self.counter.next())
     }
+}
+
+pub struct GuiCommunication {
+    pub event_receiver: ReceiverHandle<EventMessage>,
+    pub active_tasks: HashMap<TaskId, ReceiverHandle<Message>>,
+    pub request_sender: RequestSender,
+}
+pub struct GuiManagement {
+    pub task_id_counter: IdCounter,
+}
+
+pub struct GuiGeneralData {
+    pub python_version_data: Option<Vec<PythonReleaseData>>,
+    pub selected_python_version: Option<Release>,
 }
