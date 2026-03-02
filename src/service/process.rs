@@ -10,7 +10,6 @@ mod util;
 // easier types
 pub type ProcessSender = mpsc::Sender<ProcessMessage>;
 
-/// Handles file paths.
 pub struct ProcessService {
     _event_sender: EventSender,
 }

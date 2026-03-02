@@ -7,6 +7,7 @@ edition = "2024"
 anyhow = "1.0.102"
 async-trait = "0.1.89"
 chrono = {version = "0.4.44", features = ["serde"]}
+directories = "6.0.0"
 futures = "0.3.32"
 iced = {version = "0.14.0", features = ["tokio", "debug"]}
 reqwest = "0.13.2"

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use crate::service::{
+    file::FileSender,
     gui::{enums::EventMessage, message::Message, sync::ReceiverHandle},
     request::{
         RequestSender,
@@ -45,6 +46,7 @@ pub struct GuiCommunication {
     pub event_receiver: ReceiverHandle<EventMessage>,
     pub active_tasks: HashMap<TaskId, ReceiverHandle<Message>>,
     pub request_sender: RequestSender,
+    pub file_sender: FileSender,
 }
 pub struct GuiManagement {
     pub task_id_counter: IdCounter,

@@ -1,4 +1,5 @@
 pub mod core;
+pub mod file;
 pub mod gui;
 pub mod logic;
 pub mod process;

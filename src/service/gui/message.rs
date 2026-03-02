@@ -16,8 +16,9 @@ pub enum Message {
         handle: ReceiverHandle<Message>,
     },
     RequestPythonVersions,
-    PythonVersionsReceived {
+    PythonVersionsLoaded {
         result: Option<Vec<PythonReleaseData>>,
+        disallow_save: bool,
     },
     PythonVersionSelected {
         selection: Release,

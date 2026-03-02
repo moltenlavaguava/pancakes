@@ -1,11 +1,11 @@
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 pub struct PythonReleaseData {
-    #[serde(rename(deserialize = "cycle"))]
+    #[serde(alias = "cycle")]
     pub major_release: Release,
-    #[serde(rename(deserialize = "releaseDate"))]
+    #[serde(alias = "releaseDate")]
     pub release_date: NaiveDate,
     pub eol: NaiveDate,
     pub latest: Release,
@@ -13,6 +13,7 @@ pub struct PythonReleaseData {
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(try_from = "String")]
+#[serde(into = "String")]
 pub struct Release {
     major: u64,
     minor: u64,
@@ -62,5 +63,10 @@ impl TryFrom<String> for Release {
             minor,
             patch,
         })
+    }
+}
+impl Into<String> for Release {
+    fn into(self) -> String {
+        self.to_string()
     }
 }
