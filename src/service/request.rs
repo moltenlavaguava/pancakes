@@ -2,10 +2,11 @@ use reqwest::Client;
 use tokio::sync::mpsc;
 
 use crate::service::{
-    gui::enums::EventSender, logic::ServiceLogic, request::enums::RequestMessage,
+    file::FileSender, gui::enums::EventSender, logic::ServiceLogic, request::enums::RequestMessage,
 };
 
 pub mod enums;
+mod installer;
 pub mod structs;
 mod util;
 
@@ -15,13 +16,15 @@ pub type RequestSender = mpsc::Sender<RequestMessage>;
 /// Handles file paths.
 pub struct RequestService {
     _event_sender: EventSender,
+    file_sender: FileSender,
     client: Client,
 }
 
 impl RequestService {
-    pub fn new(event_sender: EventSender) -> Self {
+    pub fn new(event_sender: EventSender, file_sender: FileSender) -> Self {
         Self {
             _event_sender: event_sender,
+            file_sender,
             client: Client::new(),
         }
     }
@@ -39,6 +42,25 @@ impl ServiceLogic<RequestMessage> for RequestService {
         match msg {
             RequestMessage::QueryPythonVersions { response_tx } => {
                 let _ = response_tx.send(util::get_python_versions(&self.client).await);
+            }
+            RequestMessage::DownloadPython {
+                release_data,
+                response_tx,
+            } => {
+                // request cache data dir from file serivce
+                let mut installer_dest_folder =
+                    match util::get_cache_dir(self.file_sender.clone()).await {
+                        Ok(f) => f,
+                        Err(e) => {
+                            let _ = response_tx.send(Err(e));
+                            return;
+                        }
+                    };
+                installer_dest_folder.push("installers");
+                let _ = response_tx.send(
+                    installer::download_python(&release_data, &self.client, installer_dest_folder)
+                        .await,
+                );
             }
         }
     }

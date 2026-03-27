@@ -20,7 +20,7 @@ pub fn run_program() {
 
     // Create services
     let process_service = ProcessService::new(t_gui_event.clone());
-    let request_service = RequestService::new(t_gui_event.clone());
+    let request_service = RequestService::new(t_gui_event.clone(), t_file.clone());
     let file_service = FileService::new();
 
     // Start services

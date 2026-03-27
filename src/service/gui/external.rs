@@ -6,7 +6,11 @@ use crate::service::{
         FileSender,
         enums::{Directory, FileMessage},
     },
-    request::{RequestSender, enums::RequestMessage, structs::PythonReleaseData},
+    request::{
+        RequestSender,
+        enums::RequestMessage,
+        structs::{PythonReleaseData, Release},
+    },
 };
 
 pub async fn request_python_versions(
@@ -60,4 +64,18 @@ pub async fn load_python_release_data(file_sender: FileSender) -> Result<Vec<Pyt
     let txt = rx.await??;
     let data: Vec<PythonReleaseData> = serde_json::from_str(&txt)?;
     Ok(data)
+}
+pub async fn download_selected_python(
+    request_sender: RequestSender,
+    release_data: PythonReleaseData,
+) -> Result<()> {
+    let (tx, rx) = oneshot::channel();
+    let _ = request_sender
+        .send(RequestMessage::DownloadPython {
+            release_data,
+            response_tx: tx,
+        })
+        .await;
+    let r = rx.await??;
+    Ok(r)
 }

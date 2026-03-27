@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::service::{
     file::FileSender,
-    gui::{enums::EventMessage, message::Message, sync::ReceiverHandle},
+    gui::{enums::EventMessage, message::Message, sync::ReceiverHandle, widgets::modal::Modal},
     request::{
         RequestSender,
         structs::{PythonReleaseData, Release},
@@ -54,5 +54,6 @@ pub struct GuiManagement {
 
 pub struct GuiGeneralData {
     pub python_version_data: Option<Vec<PythonReleaseData>>,
-    pub selected_python_version: Option<Release>,
+    pub selected_python_version_data: Option<PythonReleaseData>,
+    pub modal: Option<Modal>,
 }

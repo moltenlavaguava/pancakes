@@ -1,8 +1,8 @@
-use anyhow::Result;
-
 use crate::service::{
-    gui::{enums::EventMessage, structs::TaskId, sync::ReceiverHandle},
-    request::structs::{PythonReleaseData, Release},
+    gui::{
+        enums::EventMessage, structs::TaskId, sync::ReceiverHandle, widgets::modal::ModalMessage,
+    },
+    request::structs::PythonReleaseData,
 };
 
 #[derive(Debug, Clone)]
@@ -21,6 +21,9 @@ pub enum Message {
         disallow_save: bool,
     },
     PythonVersionSelected {
-        selection: Release,
+        selection: PythonReleaseData,
     },
+    DownloadSelectedPython,
+    ModalMessage(ModalMessage),
+    HideModal,
 }

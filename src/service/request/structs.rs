@@ -1,23 +1,34 @@
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
 
+use crate::service::request::enums::DateBool;
+
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 pub struct PythonReleaseData {
     #[serde(alias = "cycle")]
     pub major_release: Release,
     #[serde(alias = "releaseDate")]
     pub release_date: NaiveDate,
+    #[serde(alias = "latestReleaseDate")]
+    pub latest_release_date: NaiveDate,
+    #[serde(alias = "support")]
+    pub support_date: DateBool,
     pub eol: NaiveDate,
     pub latest: Release,
+}
+impl std::fmt::Display for PythonReleaseData {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(&self.major_release, f)
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(try_from = "String")]
 #[serde(into = "String")]
 pub struct Release {
-    major: u64,
-    minor: u64,
-    patch: Option<u64>,
+    pub major: u64,
+    pub minor: u64,
+    pub patch: Option<u64>,
 }
 impl std::fmt::Display for Release {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

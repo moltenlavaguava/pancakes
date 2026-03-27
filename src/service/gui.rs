@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use iced::widget::{button, column, pick_list};
+use iced::widget::{button, column, pick_list, row};
 use iced::{Element, Subscription, Task, Theme};
 use tokio::sync::mpsc;
 
@@ -10,13 +10,17 @@ use crate::service::gui::message::Message;
 use crate::service::gui::structs::{GuiCommunication, GuiGeneralData, GuiManagement, IdCounter};
 use crate::service::gui::sync::ReceiverHandle;
 use crate::service::request::RequestSender;
-use crate::service::request::structs::Release;
+use crate::service::request::structs::PythonReleaseData;
 
 pub mod enums;
 mod external;
+mod icons;
 pub mod message;
 pub mod structs;
+mod styling;
 pub mod sync;
+mod util;
+mod widgets;
 
 pub struct App {
     n: i32,
@@ -37,7 +41,8 @@ impl App {
         };
         let data = GuiGeneralData {
             python_version_data: None,
-            selected_python_version: None,
+            selected_python_version_data: None,
+            modal: None,
         };
         let app = Self {
             n: 0,
@@ -123,23 +128,47 @@ impl App {
                 }
             }
             Message::PythonVersionSelected { selection } => {
-                //
-                self.data.selected_python_version = Some(selection);
+                self.data.selected_python_version_data = Some(selection);
                 Task::none()
+            }
+            Message::DownloadSelectedPython => {
+                let request_sender = self.communication.request_sender.clone();
+                match &self.data.selected_python_version_data {
+                    Some(d) => Task::perform(
+                        external::download_selected_python(request_sender, d.clone()),
+                        |_| {},
+                    )
+                    .discard(),
+                    None => Task::none(),
+                }
+            }
+            Message::HideModal => {
+                self.data.modal = None;
+                Task::none()
+            }
+            Message::ModalMessage(m) => {
+                if let Some(modal) = &mut self.data.modal {
+                    modal.update(m)
+                } else {
+                    Task::none()
+                }
             }
         }
     }
     fn view<'a>(&'a self) -> Element<'a, Message> {
-        let options: Vec<&Release> = if let Some(d) = &self.data.python_version_data {
-            d.iter().map(|data| &data.major_release).collect()
+        let options = if let Some(d) = &self.data.python_version_data {
+            util::filter_compiled_python_versions(d).collect()
         } else {
             Vec::new()
         };
         column![
-            button("Request Versions").on_press(Message::RequestPythonVersions),
+            row![
+                button("Request Versions").on_press(Message::RequestPythonVersions),
+                button("Download Python").on_press(Message::DownloadSelectedPython)
+            ],
             pick_list(
                 options,
-                self.data.selected_python_version.as_ref(),
+                self.data.selected_python_version_data.as_ref(),
                 |selection| {
                     Message::PythonVersionSelected {
                         selection: selection.clone(),
