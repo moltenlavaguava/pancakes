@@ -6,14 +6,15 @@ use iced::{
 };
 
 use crate::service::gui::{
+    App,
     message::Message,
     widgets::{
         container::{default_modal_background_container, default_modal_container},
-        modal::pymanager_install::{PMIMessage, PMIModal},
+        modal::install::{InstallModal, InstallModalMsg},
     },
 };
 
-pub mod pymanager_install;
+pub mod install;
 
 #[derive(Debug, Clone)]
 enum AbstractModalMessage<Local, Global> {
@@ -23,17 +24,27 @@ enum AbstractModalMessage<Local, Global> {
 
 trait AbstractModal<Global: 'static>: Into<Modal> {
     type ModalMsg;
+    type App;
     // Only creates interior content. Does not make or handle modal mangement / container.
-    fn view(&self, theme: &Theme) -> Element<'_, AbstractModalMessage<Self::ModalMsg, Global>>;
+    fn view(
+        &self,
+        app: &Self::App,
+        theme: &Theme,
+    ) -> Element<'_, AbstractModalMessage<Self::ModalMsg, Global>>;
     fn update(
         &mut self,
+        app: &mut Self::App,
         message: Self::ModalMsg,
     ) -> Task<AbstractModalMessage<Self::ModalMsg, Message>>;
     // Wrapper to create the modal container body (centered)
-    fn build(&self, theme: &Theme) -> Element<'_, AbstractModalMessage<Self::ModalMsg, Global>> {
+    fn build(
+        &self,
+        app: &Self::App,
+        theme: &Theme,
+    ) -> Element<'_, AbstractModalMessage<Self::ModalMsg, Global>> {
         // make main container opaque to make mouse clicks on modal itself not kill it
         let modal = container(opaque(
-            default_modal_container(self.view(theme), theme).height(Length::Fill),
+            default_modal_container(self.view(app, theme), theme).height(Length::Fill),
         ));
         // customize modal sizing
         let sized_modal: Element<AbstractModalMessage<Self::ModalMsg, Global>> =
@@ -66,7 +77,7 @@ trait AbstractModal<Global: 'static>: Into<Modal> {
 
 #[derive(Debug, Clone)]
 pub enum ModalMessage {
-    PMI(PMIMessage),
+    Install(InstallModalMsg),
     HideModal,
 }
 
@@ -81,22 +92,22 @@ enum ModalFillAmount {
 
 #[derive(Debug, Clone)]
 pub enum Modal {
-    PMI(PMIModal),
+    Install(InstallModal),
 }
 impl Modal {
-    pub fn view(&self, theme: &Theme) -> Element<'_, Message> {
+    pub fn view(&self, app: &App, theme: &Theme) -> Element<'_, Message> {
         let main_modal_content = match self {
-            Self::PMI(m) => m.build(theme).map(|abstract_msg| match abstract_msg {
-                AbstractModalMessage::Local(l) => Message::ModalMessage(ModalMessage::PMI(l)),
+            Self::Install(m) => m.build(app, theme).map(|abstract_msg| match abstract_msg {
+                AbstractModalMessage::Local(l) => Message::ModalMessage(ModalMessage::Install(l)),
                 AbstractModalMessage::Global(g) => g,
             }),
         };
         opaque(mouse_area(main_modal_content).on_press(Message::HideModal))
     }
-    pub fn update(&mut self, msg: ModalMessage) -> Task<Message> {
+    pub fn update(&mut self, app: &mut App, msg: ModalMessage) -> Task<Message> {
         match (self, msg) {
-            (Modal::PMI(w), ModalMessage::PMI(m)) => w.update(m).map(|bm| match bm {
-                AbstractModalMessage::Local(l) => Message::ModalMessage(ModalMessage::PMI(l)),
+            (Modal::Install(w), ModalMessage::Install(m)) => w.update(app, m).map(|bm| match bm {
+                AbstractModalMessage::Local(l) => Message::ModalMessage(ModalMessage::Install(l)),
                 AbstractModalMessage::Global(g) => g,
             }),
             _ => Task::none(),

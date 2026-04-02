@@ -16,3 +16,10 @@ pub enum ChildMessage {
     StdErr(String),
     Exit(ExitStatus),
 }
+
+#[derive(Debug, Clone)]
+pub enum UVVerifyResult {
+    Ok,
+    NotFound,
+    Error,
+}

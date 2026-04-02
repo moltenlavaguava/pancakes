@@ -4,6 +4,7 @@ use iced::{
 };
 
 use crate::service::gui::{
+    App,
     message::Message,
     widgets::{
         modal::Modal,
@@ -16,6 +17,7 @@ pub fn build_page<'a>(
     notifications: Option<Vec<Notification<'a>>>,
     notification_render_data: NotificationRenderData,
     modal: Option<&'a Modal>,
+    app: &App,
     theme: &Theme,
 ) -> Element<'a, Message> {
     let mut stack = Stack::new().push(content);
@@ -33,7 +35,7 @@ pub fn build_page<'a>(
     }
     if let Some(modal) = modal {
         // add the modal on top of everything else
-        let content = modal.view(theme);
+        let content = modal.view(app, theme);
         stack = stack.push(content);
     }
     stack.into()

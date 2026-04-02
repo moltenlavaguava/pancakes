@@ -1,24 +1,27 @@
 use std::collections::HashMap;
 
-use iced::widget::{button, column, pick_list, row};
 use iced::{Element, Subscription, Task, Theme};
 use tokio::sync::mpsc;
 
 use crate::service::file::FileSender;
-use crate::service::gui::enums::EventMessage;
+use crate::service::gui::enums::{EventMessage, Page};
+use crate::service::gui::learn::LearnData;
 use crate::service::gui::message::Message;
+use crate::service::gui::page::home;
 use crate::service::gui::structs::{GuiCommunication, GuiGeneralData, GuiManagement, IdCounter};
 use crate::service::gui::sync::ReceiverHandle;
 use crate::service::request::RequestSender;
-use crate::service::request::structs::PythonReleaseData;
 
 pub mod enums;
 mod external;
 mod icons;
+mod learn;
 pub mod message;
+mod page;
 pub mod structs;
 mod styling;
 pub mod sync;
+mod update;
 mod util;
 mod widgets;
 
@@ -39,10 +42,15 @@ impl App {
         let management = GuiManagement {
             task_id_counter: flags.task_id_counter,
         };
+        let learn_data = LearnData {
+            home_search: String::new(),
+        };
         let data = GuiGeneralData {
             python_version_data: None,
             selected_python_version_data: None,
             modal: None,
+            page: Page::Home,
+            learn_data,
         };
         let app = Self {
             n: 0,
@@ -59,124 +67,28 @@ impl App {
                     disallow_save: true,
                 }),
                 Err(e) => {
-                    println!("An error occured while loading the python versions from file: {e}");
-                    Task::none()
+                    if let Some(io_err) = e.downcast_ref::<std::io::Error>()
+                        && io_err.kind() == std::io::ErrorKind::NotFound
+                    {
+                        println!("Version file not found, requesting");
+                        Task::none()
+                    } else {
+                        println!(
+                            "An error occured while loading the python versions from file: {e}"
+                        );
+                        Task::none()
+                    }
                 }
             });
         (app, task)
     }
     fn update(&mut self, msg: Message) -> Task<Message> {
-        match msg {
-            Message::Decrement => {
-                self.n -= 1;
-                Task::none()
-            }
-            Message::Increment => {
-                self.n += 1;
-                Task::none()
-            }
-            Message::EventRecieved(msg) => {
-                todo!()
-            }
-            Message::EventBusClosed => {
-                println!("event bus closed");
-                Task::none()
-            }
-            Message::TaskFinished(id) => {
-                self.communication.active_tasks.remove(&id);
-                Task::none()
-            }
-            Message::TaskStarted { handle } => {
-                self.communication.active_tasks.insert(handle.id(), handle);
-                Task::none()
-            }
-            Message::RequestPythonVersions => {
-                let request_sender = self.communication.request_sender.clone();
-                Task::perform(
-                    external::request_python_versions(request_sender),
-                    |result| Message::PythonVersionsLoaded {
-                        result,
-                        disallow_save: false,
-                    },
-                )
-            }
-            Message::PythonVersionsLoaded {
-                result,
-                disallow_save,
-            } => {
-                // if this result is different from what is cached, save it
-                if (self.data.python_version_data != result) && !disallow_save {
-                    let version_data = match &result {
-                        Some(d) => d.clone(),
-                        None => Vec::new(),
-                    };
-                    self.data.python_version_data = result;
-                    println!("Saving python data..");
-                    let file_sender = self.communication.file_sender.clone();
-                    Task::perform(
-                        external::save_python_release_data(version_data, file_sender),
-                        |r| {
-                            if let Err(e) = r {
-                                println!("An error occured while saving python release data: {e}")
-                            }
-                        },
-                    )
-                    .discard()
-                } else {
-                    self.data.python_version_data = result;
-                    Task::none()
-                }
-            }
-            Message::PythonVersionSelected { selection } => {
-                self.data.selected_python_version_data = Some(selection);
-                Task::none()
-            }
-            Message::DownloadSelectedPython => {
-                let request_sender = self.communication.request_sender.clone();
-                match &self.data.selected_python_version_data {
-                    Some(d) => Task::perform(
-                        external::download_selected_python(request_sender, d.clone()),
-                        |_| {},
-                    )
-                    .discard(),
-                    None => Task::none(),
-                }
-            }
-            Message::HideModal => {
-                self.data.modal = None;
-                Task::none()
-            }
-            Message::ModalMessage(m) => {
-                if let Some(modal) = &mut self.data.modal {
-                    modal.update(m)
-                } else {
-                    Task::none()
-                }
-            }
-        }
+        update::update(self, msg)
     }
     fn view<'a>(&'a self) -> Element<'a, Message> {
-        let options = if let Some(d) = &self.data.python_version_data {
-            util::filter_compiled_python_versions(d).collect()
-        } else {
-            Vec::new()
-        };
-        column![
-            row![
-                button("Request Versions").on_press(Message::RequestPythonVersions),
-                button("Download Python").on_press(Message::DownloadSelectedPython)
-            ],
-            pick_list(
-                options,
-                self.data.selected_python_version_data.as_ref(),
-                |selection| {
-                    Message::PythonVersionSelected {
-                        selection: selection.clone(),
-                    }
-                }
-            ),
-        ]
-        .into()
+        match &self.data.page {
+            Page::Home => home::view(self),
+        }
     }
     fn subscription(&self) -> Subscription<Message> {
         let bus = self.communication.event_receiver.watch(

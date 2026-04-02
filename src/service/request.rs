@@ -6,7 +6,6 @@ use crate::service::{
 };
 
 pub mod enums;
-mod installer;
 pub mod structs;
 mod util;
 
@@ -38,30 +37,5 @@ impl ServiceLogic<RequestMessage> for RequestService {
     // Note: currently this service only handles one request at a time.
     // More requests can be done at a time by Arcing the client, but to save
     // bandwith this is not being done
-    async fn handle_message(&mut self, msg: RequestMessage) {
-        match msg {
-            RequestMessage::QueryPythonVersions { response_tx } => {
-                let _ = response_tx.send(util::get_python_versions(&self.client).await);
-            }
-            RequestMessage::DownloadPython {
-                release_data,
-                response_tx,
-            } => {
-                // request cache data dir from file serivce
-                let mut installer_dest_folder =
-                    match util::get_cache_dir(self.file_sender.clone()).await {
-                        Ok(f) => f,
-                        Err(e) => {
-                            let _ = response_tx.send(Err(e));
-                            return;
-                        }
-                    };
-                installer_dest_folder.push("installers");
-                let _ = response_tx.send(
-                    installer::download_python(&release_data, &self.client, installer_dest_folder)
-                        .await,
-                );
-            }
-        }
-    }
+    async fn handle_message(&mut self, msg: RequestMessage) {}
 }
