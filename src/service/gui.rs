@@ -46,8 +46,6 @@ impl App {
             home_search: String::new(),
         };
         let data = GuiGeneralData {
-            python_version_data: None,
-            selected_python_version_data: None,
             modal: None,
             page: Page::Home,
             learn_data,
@@ -60,26 +58,7 @@ impl App {
         };
         // request python version data, if it exists
         let file_sender = app.communication.file_sender.clone();
-        let task =
-            Task::future(external::load_python_release_data(file_sender)).then(|r| match r {
-                Ok(d) => Task::done(Message::PythonVersionsLoaded {
-                    result: Some(d),
-                    disallow_save: true,
-                }),
-                Err(e) => {
-                    if let Some(io_err) = e.downcast_ref::<std::io::Error>()
-                        && io_err.kind() == std::io::ErrorKind::NotFound
-                    {
-                        println!("Version file not found, requesting");
-                        Task::none()
-                    } else {
-                        println!(
-                            "An error occured while loading the python versions from file: {e}"
-                        );
-                        Task::none()
-                    }
-                }
-            });
+        let task = Task::none();
         (app, task)
     }
     fn update(&mut self, msg: Message) -> Task<Message> {

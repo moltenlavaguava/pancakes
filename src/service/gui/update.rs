@@ -1,6 +1,6 @@
 use iced::Task;
 
-use crate::service::gui::{App, external, message::Message};
+use crate::service::gui::{App, message::Message};
 
 pub mod install;
 pub mod learn;

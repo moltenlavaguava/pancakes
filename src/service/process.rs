@@ -38,6 +38,7 @@ impl ServiceLogic<ProcessMessage> for ProcessService {
                     stream_process(cmd, args, output_stream).await;
                 });
             }
+            ProcessMessage::InstallUV { result_sender } => {}
         }
     }
 }

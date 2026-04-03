@@ -4,36 +4,30 @@ use serde::Deserialize;
 use url::Url;
 
 #[derive(Debug, Clone, Deserialize)]
-struct UVVersionParts {
-    major: u64,
-    minor: u64,
-    patch: u64,
-}
-
-#[derive(Debug, Clone, Deserialize)]
 pub struct UVRawVersionOutput {
-    version_parts: UVVersionParts,
+    version: String,
     url: Option<Url>,
     path: Option<PathBuf>,
 }
+#[derive(Debug, Clone)]
 pub struct CurrentReleaseData {
-    latest_release: Release,
-    current_version: Option<Release>,
+    pub latest_release: Option<Release>,
+    pub current_version: Option<Release>,
 }
 impl CurrentReleaseData {
     pub fn from_uv_raw_version_output(output: Vec<UVRawVersionOutput>) -> CurrentReleaseData {
+        // get latest *stable* release
         let latest = output
-            .get(0)
-            .expect("Expected avaliable Python versions to be greater than 0")
-            .version_parts
-            .clone();
+            .iter()
+            .find_map(|r| Release::try_from(r.version.clone()).ok());
         let current = output
             .iter()
             .find(|r| r.path.is_some())
-            .map(|o| o.version_parts.clone().into());
+            .map(|o| Release::try_from(o.version.clone()).ok())
+            .flatten();
         Self {
-            latest_release: latest.into(),
-            current_version: current.into(),
+            latest_release: latest,
+            current_version: current,
         }
     }
 }
@@ -93,14 +87,5 @@ impl TryFrom<String> for Release {
 impl Into<String> for Release {
     fn into(self) -> String {
         self.to_string()
-    }
-}
-impl From<UVVersionParts> for Release {
-    fn from(value: UVVersionParts) -> Self {
-        Release {
-            major: value.major,
-            minor: value.minor,
-            patch: Some(value.patch),
-        }
     }
 }

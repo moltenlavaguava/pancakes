@@ -4,10 +4,6 @@ use directories::ProjectDirs;
 use std::fs;
 use std::path::PathBuf;
 
-#[cfg(target_os = "windows")]
-use crate::service::process::ProcessSender;
-use crate::service::request::structs::Release;
-
 pub fn setup_directories() -> Result<(PathBuf, PathBuf)> {
     // get directories
     let proj_dirs = ProjectDirs::from("", "", "pancakes")
@@ -24,14 +20,4 @@ pub fn setup_directories() -> Result<(PathBuf, PathBuf)> {
     fs::create_dir_all(cache_dir.join("installers"))?;
 
     Ok((cache_dir.to_path_buf(), data_dir.to_path_buf()))
-}
-#[cfg(target_os = "windows")]
-pub async fn install_python(
-    release: &Release,
-    installers_dir: &PathBuf,
-    process_sender: &ProcessSender,
-) {
-    // this function only compiles on windows
-    // step 1: construct filename
-    let arch = std::env::consts::ARCH;
 }
