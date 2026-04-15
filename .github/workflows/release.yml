@@ -6,6 +6,7 @@ on:
       - 'v*'
   workflow_dispatch:
 
+# Give the action permission to create releases and upload files
 permissions:
   contents: write
 
@@ -21,9 +22,11 @@ jobs:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
             binary_name: pancakes.exe
+            asset_name: pancakes.exe
           - os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             binary_name: pancakes
+            asset_name: pancakes-linux
 
     steps:
       - uses: actions/checkout@v4
@@ -43,10 +46,16 @@ jobs:
       - name: Build
         run: cargo build --release --target ${{ matrix.target }}
 
+      # Rename the Linux binary specifically before uploading
+      - name: Rename Linux Binary
+        if: matrix.os == 'ubuntu-latest'
+        run: mv target/${{ matrix.target }}/release/${{ matrix.binary_name }} target/${{ matrix.target }}/release/${{ matrix.asset_name }}
+
       - name: Upload Release
         uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: target/${{ matrix.target }}/release/${{ matrix.binary_name }}
+          files: target/${{ matrix.target }}/release/${{ matrix.asset_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -74,26 +83,25 @@ jobs:
 
       - name: Bundle and Create Universal Binary
         run: |
-          # 1. Use cargo-bundle to create the folder structure (.app) for one architecture
+          # 1. Create the folder structure (.app) for x86
           cargo bundle --release --target x86_64-apple-darwin
           
-          # 2. Extract the .app folder created by cargo-bundle
-          # (cargo-bundle puts it in target/x86_64-apple-darwin/bundle/osx/Pancakes.app)
-          cp -r target/x86_64-apple-darwin/bundle/osx/Pancakes.app .
+          # 2. Extract the .app folder (Corrected path and case)
+          cp -r target/x86_64-apple-darwin/release/bundle/osx/pancakes.app .
           
-          # 3. Use lipo to merge the Intel and Silicon binaries into a Universal binary
-          # and overwrite the binary inside the bundle
+          # 3. Use lipo to merge binaries into one Universal binary
           lipo -create \
             target/x86_64-apple-darwin/release/pancakes \
             target/aarch64-apple-darwin/release/pancakes \
-            -output "Pancakes.app/Contents/MacOS/pancakes"
+            -output "pancakes.app/Contents/MacOS/pancakes"
           
-          # 4. Zip it up
-          zip -r Pancakes-macOS-Universal.zip "Pancakes.app"
+          # 4. Zip it
+          zip -r pancakes-macOS-Universal.zip "pancakes.app"
 
       - name: Upload macOS Release
         uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: Pancakes-macOS-Universal.zip
+          files: pancakes-macOS-Universal.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
