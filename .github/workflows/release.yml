@@ -1,0 +1,104 @@
+name: Release pancakes
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  # Build for Windows and Linux
+  build-win-linux:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            binary_name: pancakes.exe
+            asset_name: pancakes-windows.exe
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            binary_name: pancakes
+            asset_name: pancakes-linux
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Rust Cache
+        uses: swatinem/rust-cache@v2
+
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libfontconfig1-dev libvulkan-dev libwayland-dev libx11-dev
+
+      - name: Build
+        run: cargo build --release --target ${{ matrix.target }}
+
+      - name: Rename and Upload
+        uses: softprops/action-gh-release@v1
+        with:
+          files: target/${{ matrix.target }}/release/${{ matrix.binary_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Build for macOS (Universal App)
+  build-macos:
+    name: Build macOS Universal
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust Targets
+        run: |
+          rustup target add x86_64-apple-darwin
+          rustup target add aarch64-apple-darwin
+
+      - name: Build Intel and Apple Silicon
+        run: |
+          cargo build --release --target x86_64-apple-darwin
+          cargo build --release --target aarch64-apple-darwin
+
+      - name: Create .app Bundle
+        run: |
+          # 1. Setup folders
+          mkdir -p "pancakes.app/Contents/MacOS"
+          
+          # 2. Combine into a Universal Binary
+          lipo -create \
+            target/x86_64-apple-darwin/release/pancakes \
+            target/aarch64-apple-darwin/release/pancakes \
+            -output "pancakes.app/Contents/MacOS/pancakes"
+          
+          # 3. Create metadata (Info.plist)
+          cat <<EOF > "pancakes.app/Contents/Info.plist"
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleExecutable</key>
+              <string>pancakes</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.moltenlavaguava.pancakes</string>
+              <key>CFBundleName</key>
+              <string>pancakes</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleShortVersionString</key>
+              <string>1.0</string>
+          </dict>
+          </plist>
+          EOF
+
+          # 4. Zip it
+          zip -r pancakes-macOS-Universal.zip "pancakes.app"
+
+      - name: Upload macOS Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: pancakes-macOS-Universal.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
