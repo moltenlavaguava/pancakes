@@ -1,2 +1,3 @@
-# pancakes
-1705 final project @ U of U :D
+# pancakes 🥞
+
+readme coming soon, stay tuned :p
