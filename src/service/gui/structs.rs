@@ -1,14 +1,18 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::Path};
+
+use iced::widget::image;
 
 use crate::service::{
     file::FileSender,
     gui::{
-        enums::{EventMessage, Page},
+        enums::{EventMessage, Page, PathPythonState},
         learn::LearnData,
         message::Message,
+        page::guide::GuideRegistry,
         sync::ReceiverHandle,
         widgets::modal::Modal,
     },
+    process::ProcessSender,
     request::RequestSender,
 };
 
@@ -50,6 +54,7 @@ pub struct GuiCommunication {
     pub active_tasks: HashMap<TaskId, ReceiverHandle<Message>>,
     pub request_sender: RequestSender,
     pub file_sender: FileSender,
+    pub process_sender: ProcessSender,
 }
 pub struct GuiManagement {
     pub task_id_counter: IdCounter,
@@ -59,4 +64,43 @@ pub struct GuiGeneralData {
     pub modal: Option<Modal>,
     pub learn_data: LearnData,
     pub page: Page,
+    pub restart_needed: bool,
+    pub path_python_version: PathPythonState,
+    pub image_registry: ImageRegistry,
+    pub guide_registry: GuideRegistry,
+}
+
+// image registry handling
+#[derive(rust_embed::RustEmbed)]
+#[folder = "images/"]
+struct Asset;
+
+pub struct ImageRegistry {
+    images: HashMap<String, image::Handle>,
+}
+
+impl ImageRegistry {
+    pub fn new() -> Self {
+        let mut images = HashMap::new();
+
+        for file_path in Asset::iter() {
+            if let Some(f) = Asset::get(&file_path) {
+                // get filename
+                let key = Path::new(file_path.as_ref())
+                    .file_stem()
+                    .and_then(|s| s.to_str())
+                    .unwrap_or(file_path.as_ref())
+                    .to_string();
+
+                let handle = image::Handle::from_bytes(f.data.into_owned());
+
+                images.insert(key, handle);
+            }
+        }
+
+        Self { images }
+    }
+    pub fn get(&self, key: &str) -> Option<image::Handle> {
+        self.images.get(key).cloned()
+    }
 }

@@ -38,7 +38,7 @@ pub fn run_program() {
     };
 
     // start gui
-    run_gui(r_gui_event, t_request, t_file).expect("Failed to start gui");
+    run_gui(r_gui_event, t_request, t_file, t_process).expect("Failed to start gui");
 
     // send request to end program
     end_token.cancel();

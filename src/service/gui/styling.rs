@@ -1,6 +1,13 @@
 use iced::{
-    Background, Border, Color, Font, Padding, Pixels, Theme, border::Radius, color, font::Weight,
-    padding, widget,
+    Background, Border, Color, Font, Padding, Pixels, Theme,
+    border::Radius,
+    color,
+    font::Weight,
+    padding,
+    widget::{
+        self,
+        markdown::{self, Highlight},
+    },
 };
 
 const NO_BORDER: Border = Border {
@@ -70,6 +77,17 @@ impl ContainerStyle {
             background: self.bg_color,
             border: self.border,
             ..Default::default()
+        }
+    }
+}
+pub trait MarkdownCodeContainer {
+    fn to_container_style(&self) -> ContainerStyle;
+}
+impl MarkdownCodeContainer for markdown::Settings {
+    fn to_container_style(&self) -> ContainerStyle {
+        ContainerStyle {
+            bg_color: Some(self.style.inline_code_highlight.background),
+            border: self.style.inline_code_highlight.border,
         }
     }
 }
@@ -185,6 +203,7 @@ impl ProgressBarStyle {
 
 #[derive(Debug, Clone, Copy)]
 pub struct Stylesheet {
+    pub base_text_size: f32,
     pub main_text_color: Color,
     pub error_text_color: Color,
     pub default_font: Font,
@@ -199,15 +218,17 @@ pub struct Stylesheet {
     pub interactable_bg: Background,
     pub interactable_color: Color,
     pub default_button_status_bgs: ButtonStatusBackgrounds,
-    pub tracklist_button_status_bgs: ButtonStatusBackgrounds,
     pub secondary_button_status_bgs: ButtonStatusBackgrounds,
+    pub guide_button_status_bgs: ButtonStatusBackgrounds,
     pub default_modal_background_alpha: f32,
+    pub link_color: Color,
+    pub markdown_code_border_color: Color,
 }
 impl Stylesheet {
     pub fn default_text(&self, wrap_text: bool, center_y: bool) -> TextStyle {
         TextStyle {
             color: self.main_text_color,
-            text_size: 16.0,
+            text_size: self.base_text_size,
             wrap: wrap_text,
             center_y,
             font: self.default_font,
@@ -221,7 +242,7 @@ impl Stylesheet {
     pub fn secondary_text(&self, wrap_text: bool, center_y: bool) -> TextStyle {
         TextStyle {
             color: self.secondary_text_color,
-            text_size: 14.0,
+            text_size: self.base_text_size * 0.875,
             wrap: wrap_text,
             center_y,
             font: self.default_font,
@@ -230,7 +251,7 @@ impl Stylesheet {
     pub fn title_text(&self, wrap_text: bool, center_y: bool) -> TextStyle {
         TextStyle {
             color: self.main_text_color,
-            text_size: 20.0,
+            text_size: self.base_text_size * 1.25,
             wrap: wrap_text,
             center_y,
             font: Font {
@@ -269,12 +290,6 @@ impl Stylesheet {
     pub fn secondary_button(&self) -> ButtonStyle {
         ButtonStyle {
             status_bgs: self.secondary_button_status_bgs,
-            padding: padding::all(8),
-        }
-    }
-    pub fn track_button(&self) -> ButtonStyle {
-        ButtonStyle {
-            status_bgs: self.tracklist_button_status_bgs,
             padding: padding::all(8),
         }
     }
@@ -375,11 +390,51 @@ impl Stylesheet {
             border: NO_BORDER,
         }
     }
+    pub fn default_markdown(&self) -> markdown::Settings {
+        markdown::Settings {
+            text_size: Pixels(self.base_text_size),
+            h1_size: Pixels(self.base_text_size * 2.0),
+            h2_size: Pixels(self.base_text_size * 1.5),
+            h3_size: Pixels(self.base_text_size * 1.25),
+            h4_size: Pixels(self.base_text_size * 1.0),
+            h5_size: Pixels(self.base_text_size * 0.875),
+            h6_size: Pixels(self.base_text_size * 0.85),
+            code_size: Pixels(self.base_text_size * 0.9),
+            spacing: Pixels(10.0),
+            style: markdown::Style {
+                font: self.default_font,
+                inline_code_highlight: Highlight {
+                    background: self.secondary_content_bg,
+                    border: Border {
+                        color: self.markdown_code_border_color,
+                        width: 2.0,
+                        radius: Radius::new(2),
+                    },
+                },
+                inline_code_padding: Padding {
+                    top: 0.0,
+                    right: 2.0,
+                    bottom: 0.0,
+                    left: 2.0,
+                },
+                inline_code_color: self.main_text_color,
+                inline_code_font: Font::MONOSPACE,
+                code_block_font: Font::MONOSPACE,
+                link_color: self.link_color,
+            },
+        }
+    }
+    pub fn guide_button(&self) -> ButtonStyle {
+        let mut default = self.default_button();
+        default.status_bgs = self.guide_button_status_bgs;
+        default
+    }
 }
 
 // Color palettes
 
 const DARK_STYLESHEET: Stylesheet = Stylesheet {
+    base_text_size: 16.0,
     main_text_color: color!(255, 255, 255),
     error_text_color: color!(0xDC143C),
     default_font: Font::DEFAULT,
@@ -416,14 +471,16 @@ const DARK_STYLESHEET: Stylesheet = Stylesheet {
     //     hovered: None,
     //     pressed: None,
     //     disabled: None,
-    // },
-    tracklist_button_status_bgs: ButtonStatusBackgrounds {
+    // }
+    guide_button_status_bgs: ButtonStatusBackgrounds {
         active: None,
-        hovered: Some(Background::Color(color!(64, 64, 64))),
-        pressed: Some(Background::Color(color!(50, 50, 50))),
+        hovered: Some(Background::Color(color!(122, 122, 122))),
+        pressed: Some(Background::Color(color!(100, 100, 100))),
         disabled: None,
     },
     default_modal_background_alpha: 0.6,
+    link_color: color!(68, 147, 248),
+    markdown_code_border_color: color!(26, 26, 26),
 };
 
 // Tack on app stylesheet data to any theme

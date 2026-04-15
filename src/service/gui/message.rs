@@ -1,8 +1,8 @@
 use crate::service::gui::{
-    enums::EventMessage,
+    enums::{EventMessage, PathPythonState},
     structs::TaskId,
     sync::ReceiverHandle,
-    update::{install::InstallMessage, learn::LearnMessage},
+    update::{guide::GuideMessage, install::InstallMessage},
     widgets::modal::ModalMessage,
 };
 
@@ -15,5 +15,8 @@ pub enum Message {
     ModalMessage(ModalMessage),
     HideModal,
     HomeInstallMessage(InstallMessage),
-    HomeLearnMessage(LearnMessage),
+    GuideMessage(GuideMessage),
+    PathPythonVersion(PathPythonState),
+    RestartNeeded,
+    Home,
 }

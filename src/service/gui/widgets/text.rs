@@ -1,5 +1,5 @@
 use iced::{
-    Alignment, Pixels, Theme,
+    Alignment, Length, Pixels, Theme,
     widget::{Text, text},
 };
 
@@ -20,7 +20,7 @@ fn build_text<'a>(txt: impl text::IntoFragment<'a>, style: TextStyle) -> Text<'a
     }
 
     // apply main style
-    t.style(style.style())
+    t.style(style.style()).height(Length::Shrink)
 }
 
 pub fn default_text<'a>(
@@ -50,8 +50,6 @@ pub fn error_text<'a>(
     let style = theme.stylesheet().error_text(wrap, center_y);
     build_text(txt, style)
 }
-// TODO: remove / use this when needed
-#[allow(unused)]
 pub fn same_size_secondary_text<'a>(
     txt: impl text::IntoFragment<'a>,
     theme: &Theme,

@@ -1,15 +1,19 @@
 use std::collections::HashMap;
 
-use iced::{Element, Subscription, Task, Theme};
+use iced::{Element, Subscription, Task, Theme, window};
 use tokio::sync::mpsc;
 
 use crate::service::file::FileSender;
-use crate::service::gui::enums::{EventMessage, Page};
+use crate::service::gui::enums::{EventMessage, Page, PathPythonState};
 use crate::service::gui::learn::LearnData;
 use crate::service::gui::message::Message;
+use crate::service::gui::page::guide::{self, GuideRegistry};
 use crate::service::gui::page::home;
-use crate::service::gui::structs::{GuiCommunication, GuiGeneralData, GuiManagement, IdCounter};
+use crate::service::gui::structs::{
+    GuiCommunication, GuiGeneralData, GuiManagement, IdCounter, ImageRegistry,
+};
 use crate::service::gui::sync::ReceiverHandle;
+use crate::service::process::ProcessSender;
 use crate::service::request::RequestSender;
 
 pub mod enums;
@@ -26,7 +30,6 @@ mod util;
 mod widgets;
 
 pub struct App {
-    n: i32,
     communication: GuiCommunication,
     management: GuiManagement,
     data: GuiGeneralData,
@@ -38,6 +41,7 @@ impl App {
             active_tasks: HashMap::new(),
             request_sender: flags.request_sender,
             file_sender: flags.file_sender,
+            process_sender: flags.process_sender,
         };
         let management = GuiManagement {
             task_id_counter: flags.task_id_counter,
@@ -45,20 +49,24 @@ impl App {
         let learn_data = LearnData {
             home_search: String::new(),
         };
+        let ir = ImageRegistry::new();
+        let gr = GuideRegistry::new();
         let data = GuiGeneralData {
             modal: None,
             page: Page::Home,
             learn_data,
+            path_python_version: PathPythonState::Unknown,
+            restart_needed: false,
+            image_registry: ir,
+            guide_registry: gr,
         };
         let app = Self {
-            n: 0,
             communication,
             management,
             data,
         };
-        // request python version data, if it exists
-        let file_sender = app.communication.file_sender.clone();
-        let task = Task::none();
+        // get current path python version
+        let task = util::path_python_version(app.communication.process_sender.clone());
         (app, task)
     }
     fn update(&mut self, msg: Message) -> Task<Message> {
@@ -67,6 +75,7 @@ impl App {
     fn view<'a>(&'a self) -> Element<'a, Message> {
         match &self.data.page {
             Page::Home => home::view(self),
+            Page::Guide(id) => guide::view(*id, self),
         }
     }
     fn subscription(&self) -> Subscription<Message> {
@@ -92,6 +101,7 @@ impl App {
 struct GuiFlags {
     receiver_handle: ReceiverHandle<EventMessage>,
     request_sender: RequestSender,
+    process_sender: ProcessSender,
     file_sender: FileSender,
     task_id_counter: IdCounter,
 }
@@ -100,6 +110,7 @@ pub fn run_gui(
     event_reciever: mpsc::Receiver<EventMessage>,
     request_sender: RequestSender,
     file_sender: FileSender,
+    process_sender: ProcessSender,
 ) -> iced::Result {
     // convert basic event receiver to handle
     let mut task_id_counter = IdCounter::new();
@@ -110,12 +121,20 @@ pub fn run_gui(
         task_id_counter,
         request_sender,
         file_sender,
+        process_sender,
     };
+
+    let icon = window::icon::from_file_data(include_bytes!("../../icon.png"), None).ok();
 
     let app = iced::application(move || App::new(flags.clone()), App::update, App::view)
         .subscription(App::subscription)
         .theme(App::theme)
         .title("pancakes")
+        .font(include_bytes!("../../fonts/pancakeicons.ttf").as_slice())
+        .window(window::Settings {
+            icon,
+            ..Default::default()
+        })
         .exit_on_close_request(true);
     app.run()
 }

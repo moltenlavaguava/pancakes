@@ -5,7 +5,7 @@ use iced::{
     widget::{Column, Scrollable, column, responsive, scrollable, space},
 };
 
-use crate::service::gui::styling::{ContainerStyle, ScrollableStyle};
+use crate::service::gui::styling::{AppTheme, ContainerStyle, ScrollableStyle};
 
 // Custom virtualized scrollable struct
 pub struct VirtualScrollable<'a, Message, Item, F, L>
@@ -139,4 +139,13 @@ where
         .into()
     })
     .into()
+}
+
+pub fn default_scrollable<'a, Message>(
+    content: impl Into<Element<'a, Message>>,
+    container_style: ContainerStyle,
+    theme: &Theme,
+) -> Scrollable<'a, Message> {
+    let style = theme.stylesheet().default_scrollable();
+    scrollable(content).style(style.style(container_style))
 }

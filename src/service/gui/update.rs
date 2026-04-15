@@ -1,9 +1,9 @@
 use iced::Task;
 
-use crate::service::gui::{App, message::Message};
+use crate::service::gui::{App, enums::Page, message::Message};
 
+pub mod guide;
 pub mod install;
-pub mod learn;
 
 pub fn update(app: &mut App, msg: Message) -> Task<Message> {
     match msg {
@@ -36,6 +36,18 @@ pub fn update(app: &mut App, msg: Message) -> Task<Message> {
             }
         }
         Message::HomeInstallMessage(m) => install::update(app, m),
-        Message::HomeLearnMessage(m) => learn::update(app, m),
+        Message::GuideMessage(m) => guide::update(app, m),
+        Message::PathPythonVersion(v) => {
+            app.data.path_python_version = v;
+            Task::none()
+        }
+        Message::RestartNeeded => {
+            app.data.restart_needed = true;
+            Task::none()
+        }
+        Message::Home => {
+            app.data.page = Page::Home;
+            Task::none()
+        }
     }
 }

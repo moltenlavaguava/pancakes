@@ -1,0 +1,14 @@
+[
+    {
+        "slug": "sample",
+        "name": "Sample Guide",
+        "pinned": true,
+        "tags": ["Windows"]
+    },
+    {
+        "slug": "usingpancakes",
+        "name": "Using Pancakes For Windows",
+        "pinned": true,
+        "tags": ["Windows"]
+    }
+]

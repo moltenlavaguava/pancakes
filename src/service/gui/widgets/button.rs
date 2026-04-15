@@ -52,3 +52,10 @@ pub fn invisible_button_padded<'a, Message>(
 ) -> Button<'a, Message> {
     invisible_button(content, &theme).padding(theme.stylesheet().default_button().padding)
 }
+pub fn guide_button<'a, Message>(
+    content: impl Into<Element<'a, Message>>,
+    theme: &Theme,
+) -> Button<'a, Message> {
+    let style = theme.stylesheet().guide_button();
+    style_button(button(content), style)
+}

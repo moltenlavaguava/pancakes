@@ -10,10 +10,14 @@ use crate::service::gui::{
     message::Message,
     widgets::{
         container::{default_modal_background_container, default_modal_container},
-        modal::install::{InstallModal, InstallModalMsg},
+        modal::{
+            environment::{EnvMessage, EnvModal},
+            install::{InstallModal, InstallModalMsg},
+        },
     },
 };
 
+pub mod environment;
 pub mod install;
 
 #[derive(Debug, Clone)]
@@ -78,7 +82,18 @@ trait AbstractModal<Global: 'static>: Into<Modal> {
 #[derive(Debug, Clone)]
 pub enum ModalMessage {
     Install(InstallModalMsg),
+    Environment(EnvMessage),
     HideModal,
+}
+impl From<InstallModalMsg> for ModalMessage {
+    fn from(value: InstallModalMsg) -> Self {
+        ModalMessage::Install(value)
+    }
+}
+impl Into<Message> for ModalMessage {
+    fn into(self) -> Message {
+        Message::ModalMessage(self)
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -93,12 +108,17 @@ enum ModalFillAmount {
 #[derive(Debug, Clone)]
 pub enum Modal {
     Install(InstallModal),
+    Environment(EnvModal),
 }
 impl Modal {
     pub fn view(&self, app: &App, theme: &Theme) -> Element<'_, Message> {
         let main_modal_content = match self {
             Self::Install(m) => m.build(app, theme).map(|abstract_msg| match abstract_msg {
-                AbstractModalMessage::Local(l) => Message::ModalMessage(ModalMessage::Install(l)),
+                AbstractModalMessage::Local(l) => ModalMessage::Install(l).into(),
+                AbstractModalMessage::Global(g) => g,
+            }),
+            Self::Environment(m) => m.build(app, theme).map(|abstract_msg| match abstract_msg {
+                AbstractModalMessage::Local(l) => ModalMessage::Environment(l).into(),
                 AbstractModalMessage::Global(g) => g,
             }),
         };
@@ -107,9 +127,15 @@ impl Modal {
     pub fn update(&mut self, app: &mut App, msg: ModalMessage) -> Task<Message> {
         match (self, msg) {
             (Modal::Install(w), ModalMessage::Install(m)) => w.update(app, m).map(|bm| match bm {
-                AbstractModalMessage::Local(l) => Message::ModalMessage(ModalMessage::Install(l)),
+                AbstractModalMessage::Local(l) => ModalMessage::Install(l).into(),
                 AbstractModalMessage::Global(g) => g,
             }),
+            (Modal::Environment(w), ModalMessage::Environment(m)) => {
+                w.update(app, m).map(|bm| match bm {
+                    AbstractModalMessage::Local(l) => ModalMessage::Environment(l).into(),
+                    AbstractModalMessage::Global(g) => g,
+                })
+            }
             _ => Task::none(),
         }
     }
