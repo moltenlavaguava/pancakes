@@ -202,6 +202,7 @@ pub async fn path_python_version() -> Result<Option<Version>> {
         return Ok(None);
     };
     // make sure this 'python' isn't just the ms store python redirector
+    #[cfg(windows)]
     if cmd.to_string_lossy().contains("WindowsApps") {
         return Ok(None);
     }
@@ -276,15 +277,19 @@ pub async fn setup_project(path: PathBuf, version: Version) -> Result<()> {
     ];
     let p1 = run_process(cmd, args, NO_ENV).await?;
     println!("p1: {p1:?}");
-    // set execution policy
-    let cmd = "powershell";
-    let args = [
-        "-NoProfile",
-        "-Command",
-        "Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force",
-    ];
-    let p2 = run_process(cmd, args, NO_ENV).await?;
-    println!("p2: {p2:?}");
+
+    #[cfg(windows)]
+    {
+        // set execution policy
+        let cmd = "powershell";
+        let args = [
+            "-NoProfile",
+            "-Command",
+            "Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force",
+        ];
+        let p2 = run_process(cmd, args, NO_ENV).await?;
+        println!("p2: {p2:?}");
+    }
 
     // copy in include files
     for file_path in IncludeFiles::iter() {
