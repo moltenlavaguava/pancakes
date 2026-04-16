@@ -1,4 +1,4 @@
-name: Release Pancakes
+name: Release pancakes
 
 on:
   push:

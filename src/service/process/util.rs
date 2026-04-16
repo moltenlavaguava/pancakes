@@ -30,13 +30,23 @@ pub async fn stream_process(
     envs: impl IntoIterator<Item = (impl AsRef<OsStr>, impl AsRef<OsStr>)>,
     output_stream: mpsc::Sender<ChildMessage>,
 ) -> Result<()> {
-    let mut child = Command::new(&cmd)
+    let mut command = Command::new(&cmd);
+
+    command
         .args(args)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .envs(envs)
-        .kill_on_drop(true)
-        .spawn()?;
+        .kill_on_drop(true);
+
+    #[cfg(windows)]
+    {
+        // hide terminal windows on windows
+        use std::os::windows::process::CommandExt;
+        command.as_std_mut().creation_flags(0x08000000);
+    }
+
+    let mut child = command.spawn()?;
 
     let stdout = child.stdout.take().unwrap();
     let stderr = child.stderr.take().unwrap();
