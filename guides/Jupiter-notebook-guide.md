@@ -7,7 +7,7 @@ A Jupyter Notebook file is an interactive file made up of individual cells that 
 
 ## Running a Jupyter Notebook for the First Time
 
-To use a Jupyter Notebook file, a `kernel` must be selected.
+To use a Jupyter Notebook file, a `kernel` must be selected. To achieve this, do the following:
 
 1. Click `Select Kernel`.
 
@@ -17,7 +17,7 @@ To use a Jupyter Notebook file, a `kernel` must be selected.
 
 ![Select Python Environments](python-environments.png)
 
-3. Click the `.venv` created by Pancakes. It should be tagged as `recommended`.
+3. Click the `.venv` created by Pancakes. It should be tagged as `recommended` and have a star. *To be super sure you have the right python, the path should contain `.venv`.  
 
 ![Select .venv](select-venv.png)
 
@@ -25,4 +25,4 @@ To use a Jupyter Notebook file, a `kernel` must be selected.
 
 ![Download ipykernel](ipkernel-install.png)
 
-5. Restart the kernel by clicking `Restart` near the top of the page, then run the code cell again.
+5. Restart the kernel by clicking `Restart` near the top of the page, then run the code cell again. After this, clicking the `Run` button by code cells should execute the Python code within.
