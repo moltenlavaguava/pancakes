@@ -3,7 +3,7 @@
 ## Installing Pancakes
 
 1. Unzip `pancakes.zip`
-2. Run `pancakes.exe`
+2. Run (double click) `pancakes.exe`
 
 ## Installing Python + Dependencies
 
@@ -28,7 +28,7 @@
 
 1. Download VS Code for Windows here: [https://code.visualstudio.com/](https://code.visualstudio.com/)
 
-![VS Code Download](windows-vscode)
+![VS Code Download](windows-vscode.png)
 
 ## Opening Projects
 
@@ -42,11 +42,12 @@
 2. Click `Select Python Interpreter`
 3. Click the option which says `Recommended`
 
-![Python Interpreter Selection in VS Code](select-interpreter)
+![Python Interpreter Selection in VS Code](select-interpreter.png)
 
 ## Future Use Of Pancakes
-Anytime you want to create a new folder and new virtual enviroment pancakes' `Create Virtual Enviroment Tool` can help. 
+Anytime you want to create a new folder and new virtual environment pancakes' `Create Virtual Environment Tool` can help. 
 
 Some exaples of reasons to create new project folders:
 * Personal Projects
 * A New Class
+
