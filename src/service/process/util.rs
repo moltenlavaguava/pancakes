@@ -208,7 +208,7 @@ pub async fn get_current_release_data() -> Result<CurrentReleaseData> {
 }
 pub async fn path_python_version() -> Result<Option<Version>> {
     // check if there's even a python on path (windows only)
-    #[cfg(windows)]
+    #[cfg(not(target_os = "macos"))]
     let Ok(cmd) = which("python").or_else(|_| which("python3")) else {
         return Ok(None);
     };
