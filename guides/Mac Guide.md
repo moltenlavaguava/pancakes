@@ -1,17 +1,12 @@
-## Installing Pancakes
-
-1. Unzip `pancakes-macOS-Universal.zip`
-2. Run (double click) `pancakes.app`
-3. 
-
 ## Installing Python + Dependencies
 
 1. Click `Install Python`
-2. Click `Install`
-3. Click `Next`
+2. Click `Install` to install uv (a dependency)
+3. Click `Next` A pop-up will appear saying `pancakes` needs to be updated this can be ignored, Click `OK`
 4. Click `Next`
 5. Click `Start`
 6. Click `Close`
+7. Close and reopen `pancakes.exe`
 
 ## Installing Virtual Environment + First Project
 
@@ -46,7 +41,7 @@
 ## Future Use Of Pancakes
 Anytime you want to create a project pancakes' `Create Virtual Environment Tool` can help. 
 
-Some exaples of reasons to create new project folders:
+Some examples of reasons to create new project folders:
 * Personal Projects
 * A New Class
 

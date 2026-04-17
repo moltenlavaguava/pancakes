@@ -45,7 +45,7 @@
 ## Future Use Of Pancakes
 Anytime you want to create a project pancakes' `Create Virtual Environment Tool` can help. 
 
-Some exaples of reasons to create new project folders:
+Some examples of reasons to create new project folders:
 * Personal Projects
 * A New Class
 
