@@ -242,9 +242,11 @@ pub async fn path_python_version() -> Result<Option<Version>> {
     let version_txt = prog
         .messages
         .get(0)
-        .ok_or(anyhow!(
-            "First child message of python test output must be text"
-        ))?
+        .ok_or({
+            // malformed output; python probably doesn't exist
+            log::info!("python exe failed to output proper data; assuming it doesn't exist");
+            return Ok(None);
+        })?
         .text();
     let version = Version::from_str(version_txt)?;
     Ok(Some(version))
