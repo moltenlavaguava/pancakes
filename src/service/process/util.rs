@@ -326,6 +326,7 @@ pub async fn install_python(version: Version) -> Result<()> {
     };
 
     log::info!("{prog:?}");
+    log::info!("upd shell: {upd_prog:?}");
     Ok(())
 }
 pub async fn setup_project(path: PathBuf, version: Version) -> Result<()> {
