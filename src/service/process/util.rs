@@ -207,7 +207,8 @@ pub async fn get_current_release_data() -> Result<CurrentReleaseData> {
     parse_uv_version_json(json_txt)
 }
 pub async fn path_python_version() -> Result<Option<Version>> {
-    // check if there's even a python on path
+    // check if there's even a python on path (windows only)
+    #[cfg(windows)]
     let Ok(cmd) = which("python").or_else(|_| which("python3")) else {
         return Ok(None);
     };
@@ -216,27 +217,50 @@ pub async fn path_python_version() -> Result<Option<Version>> {
     if cmd.to_string_lossy().contains("WindowsApps") {
         return Ok(None);
     }
-    // also make sure this python isn't the fake macos one
-    #[cfg(target_os = "macos")]
-    if cmd.starts_with("/usr/bin") {
-        return Ok(None);
-    }
-    let args = [
-        "-c",
-        "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')",
-    ];
-    let prog = (match run_process(cmd, args, None::<(&str, &str)>).await {
-        Ok(p) => Ok(p),
-        Err(e) => {
-            if let Some(ie) = e.downcast_ref::<std::io::Error>()
-                && ie.kind() == std::io::ErrorKind::NotFound
-            {
-                return Ok(None);
-            } else {
-                Err(e)
+
+    let python_code = "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')";
+    #[cfg(windows)]
+    let prog = {
+        let args = ["-c", python_code];
+        (match run_process(cmd, args, None::<(&str, &str)>).await {
+            Ok(p) => Ok(p),
+            Err(e) => {
+                if let Some(ie) = e.downcast_ref::<std::io::Error>()
+                    && ie.kind() == std::io::ErrorKind::NotFound
+                {
+                    return Ok(None);
+                } else {
+                    Err(e)
+                }
             }
-        }
-    })?;
+        })?
+    };
+    // #[cfg(target_os = "macos")]
+    let prog = {
+        let shell_cmd = format!(
+            r#"
+        python_bin=""
+
+        for candidate in $(which -a python3 2>/dev/null) $(which -a python 2>/dev/null); do
+            if [ -x "$candidate" ] && [ "$candidate" != "/usr/bin/python3" ] && [ "$candidate" != "/usr/bin/python" ]; then
+                python_bin="$candidate"
+                break
+            fi
+        done
+
+        if [ -z "$python_bin" ]; then
+            exit 127
+        fi
+
+        "$python_bin" -c "{}"
+        "#,
+            python_code
+        );
+
+        let cmd = "zsh";
+        let args = ["-l", "-c", &shell_cmd];
+        run_process(cmd, args, None::<(&str, &str)>).await?
+    };
 
     // check the version string
     let version_txt = prog
