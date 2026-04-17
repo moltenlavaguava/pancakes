@@ -207,7 +207,8 @@ pub async fn get_current_release_data() -> Result<CurrentReleaseData> {
     parse_uv_version_json(json_txt)
 }
 pub async fn path_python_version() -> Result<Option<Version>> {
-    // check if there's even a python on path
+    // check if there's even a python on path (windows only)
+    #[cfg(not(target_os = "macos"))]
     let Ok(cmd) = which("python").or_else(|_| which("python3")) else {
         return Ok(None);
     };
@@ -216,27 +217,64 @@ pub async fn path_python_version() -> Result<Option<Version>> {
     if cmd.to_string_lossy().contains("WindowsApps") {
         return Ok(None);
     }
-    // also make sure this python isn't the fake macos one
-    #[cfg(target_os = "macos")]
-    if cmd.starts_with("/usr/bin") {
-        return Ok(None);
-    }
-    let args = [
-        "-c",
-        "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')",
-    ];
-    let prog = (match run_process(cmd, args, None::<(&str, &str)>).await {
-        Ok(p) => Ok(p),
-        Err(e) => {
-            if let Some(ie) = e.downcast_ref::<std::io::Error>()
-                && ie.kind() == std::io::ErrorKind::NotFound
-            {
-                return Ok(None);
-            } else {
-                Err(e)
+
+    let python_code = "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')";
+    #[cfg(windows)]
+    let prog = {
+        let args = ["-c", python_code];
+        (match run_process(cmd, args, None::<(&str, &str)>).await {
+            Ok(p) => Ok(p),
+            Err(e) => {
+                if let Some(ie) = e.downcast_ref::<std::io::Error>()
+                    && ie.kind() == std::io::ErrorKind::NotFound
+                {
+                    return Ok(None);
+                } else {
+                    Err(e)
+                }
             }
-        }
-    })?;
+        })?
+    };
+    // #[cfg(target_os = "macos")]
+    #[cfg(target_os = "macos")]
+    let prog = {
+        let shell_cmd = format!(
+            r#"
+        best_path=""
+        best_ver=""
+
+        for candidate in $(which -a python3 2>/dev/null) $(which -a python 2>/dev/null); do
+            # Must exist and be executable
+            [ -x "$candidate" ] || continue
+
+            # Skip Apple's stub/system python entries
+            [ "$candidate" = "/usr/bin/python3" ] && continue
+            [ "$candidate" = "/usr/bin/python" ] && continue
+
+            # Ask this interpreter for its version
+            ver=$("$candidate" -c "import sys; print(f'{{sys.version_info.major}}.{{sys.version_info.minor}}.{{sys.version_info.micro}}')" 2>/dev/null) || continue
+
+            # Must be able to run your actual snippet too
+            "$candidate" -c "{}" >/dev/null 2>&1 || continue
+
+            # Keep the highest semantic version found
+            if [ -z "$best_ver" ] || [ "$(printf '%s\n%s\n' "$best_ver" "$ver" | sort -V | tail -n1)" = "$ver" ]; then
+                best_ver="$ver"
+                best_path="$candidate"
+            fi
+        done
+
+        [ -n "$best_path" ] || exit 127
+
+        "$best_path" -c "{}"
+        "#,
+            python_code, python_code
+        );
+
+        let cmd = "zsh";
+        let args = ["-l", "-c", &shell_cmd];
+        run_process(cmd, args, None::<(&str, &str)>).await?
+    };
 
     // check the version string
     let version_txt = prog
@@ -276,8 +314,16 @@ pub async fn install_python(version: Version) -> Result<()> {
     let upd_args = ["python", "update-shell"];
     let upd_prog = run_process(cmd, upd_args, None::<(&str, &str)>).await?;
     if !upd_prog.was_successful() {
-        bail!("Failed to update system PATH")
-    }
+        // if on mac: try to do it manually
+        #[cfg(target_os = "macos")]
+        match manual_add_macos_path().await {
+            Ok(_) => return Ok(()),
+            Err(e) => bail!(
+                "Failed to update macOS path: {upd_prog:?}; failed to write to .zshrc file: {e}",
+            ),
+        }
+        bail!("Failed to update system PATH: {upd_prog:?}")
+    };
 
     log::info!("{prog:?}");
     Ok(())
@@ -318,6 +364,54 @@ pub async fn setup_project(path: PathBuf, version: Version) -> Result<()> {
         }
         fs::write(output_path, file.data).await?;
     }
+
+    Ok(())
+}
+
+#[cfg(target_os = "macos")]
+pub async fn manual_add_macos_path() -> Result<(), Box<dyn std::error::Error>> {
+    use tokio::io::AsyncWriteExt;
+
+    let home = match home::home_dir() {
+        Some(h) => h,
+        None => return Err("Could not resolve home directory".into()),
+    };
+
+    let zshrc: PathBuf = home.join(".zshrc");
+
+    const START: &str = "# >>> pancakes-python-path >>>";
+    const END: &str = "# <<< pancakes-python-path <<<";
+    const BLOCK: &str = r#"# >>> pancakes-python-path >>>
+export PATH="$HOME/.local/bin:$PATH"
+# <<< pancakes-python-path <<<
+"#;
+
+    let existing = match fs::read_to_string(&zshrc).await {
+        Ok(s) => s,
+        Err(_) => String::new(),
+    };
+
+    if existing.contains(START) && existing.contains(END) {
+        return Ok(());
+    }
+
+    let mut new_contents = existing;
+
+    if !new_contents.ends_with('\n') && !new_contents.is_empty() {
+        new_contents.push('\n');
+    }
+
+    new_contents.push_str(BLOCK);
+
+    let mut file = fs::OpenOptions::new()
+        .create(true)
+        .write(true)
+        .truncate(true)
+        .open(&zshrc)
+        .await?;
+
+    file.write_all(new_contents.as_bytes()).await?;
+    file.flush().await?;
 
     Ok(())
 }
