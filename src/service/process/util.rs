@@ -274,8 +274,16 @@ pub async fn install_python(version: Version) -> Result<()> {
     let upd_args = ["python", "update-shell"];
     let upd_prog = run_process(cmd, upd_args, None::<(&str, &str)>).await?;
     if !upd_prog.was_successful() {
-        bail!("Failed to update system PATH")
-    }
+        // if on mac: try to do it manually
+        #[cfg(target_os = "macos")]
+        match manual_add_macos_path().await {
+            Ok(_) => return Ok(()),
+            Err(e) => bail!(
+                "Failed to update macOS path: {upd_prog:?}; failed to write to .zshrc file: {e}",
+            ),
+        }
+        bail!("Failed to update system PATH: {upd_prog:?}")
+    };
 
     log::info!("{prog:?}");
     Ok(())
@@ -316,6 +324,54 @@ pub async fn setup_project(path: PathBuf, version: Version) -> Result<()> {
         }
         fs::write(output_path, file.data).await?;
     }
+
+    Ok(())
+}
+
+#[cfg(target_os = "macos")]
+pub async fn manual_add_macos_path() -> Result<(), Box<dyn std::error::Error>> {
+    use tokio::io::AsyncWriteExt;
+
+    let home = match home::home_dir() {
+        Some(h) => h,
+        None => return Err("Could not resolve home directory".into()),
+    };
+
+    let zshrc: PathBuf = home.join(".zshrc");
+
+    const START: &str = "# >>> pancakes-python-path >>>";
+    const END: &str = "# <<< pancakes-python-path <<<";
+    const BLOCK: &str = r#"# >>> pancakes-python-path >>>
+export PATH="$HOME/.local/bin:$PATH"
+# <<< pancakes-python-path <<<
+"#;
+
+    let existing = match fs::read_to_string(&zshrc).await {
+        Ok(s) => s,
+        Err(_) => String::new(),
+    };
+
+    if existing.contains(START) && existing.contains(END) {
+        return Ok(());
+    }
+
+    let mut new_contents = existing;
+
+    if !new_contents.ends_with('\n') && !new_contents.is_empty() {
+        new_contents.push('\n');
+    }
+
+    new_contents.push_str(BLOCK);
+
+    let mut file = fs::OpenOptions::new()
+        .create(true)
+        .write(true)
+        .truncate(true)
+        .open(&zshrc)
+        .await?;
+
+    file.write_all(new_contents.as_bytes()).await?;
+    file.flush().await?;
 
     Ok(())
 }
