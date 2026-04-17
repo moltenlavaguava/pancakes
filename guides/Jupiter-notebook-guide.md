@@ -1,6 +1,3 @@
-# Getting Started w/ Jupyter Notebooks Guide
-### (Windows)
-
 ## What is a Jupyter Notebook file?
 
 A Jupyter Notebook file is an interactive file made up of individual cells that can be run one at a time. These cells can be either markdown cells or Python code cells.
