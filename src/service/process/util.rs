@@ -235,7 +235,6 @@ pub async fn path_python_version() -> Result<Option<Version>> {
             }
         })?
     };
-    // #[cfg(target_os = "macos")]
     #[cfg(target_os = "macos")]
     let prog = {
         let shell_cmd = format!(
@@ -247,9 +246,12 @@ pub async fn path_python_version() -> Result<Option<Version>> {
             # Must exist and be executable
             [ -x "$candidate" ] || continue
 
-            # Skip Apple's stub/system python entries
-            [ "$candidate" = "/usr/bin/python3" ] && continue
-            [ "$candidate" = "/usr/bin/python" ] && continue
+            # THE FIX: Skip any python located in Apple's system/developer directories
+            case "$candidate" in
+                /usr/bin/* | /Library/Developer/* | /Applications/Xcode.app/* | /System/Library/*)
+                    continue
+                    ;;
+            esac
 
             # Ask this interpreter for its version
             ver=$("$candidate" -c "import sys; print(f'{{sys.version_info.major}}.{{sys.version_info.minor}}.{{sys.version_info.micro}}')" 2>/dev/null) || continue
