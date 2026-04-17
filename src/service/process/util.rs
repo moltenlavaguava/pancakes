@@ -219,7 +219,7 @@ pub async fn path_python_version() -> Result<Option<Version>> {
     }
 
     let python_code = "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}')";
-    #[cfg(windows)]
+    #[cfg(not(target_os = "macos"))]
     let prog = {
         let args = ["-c", python_code];
         (match run_process(cmd, args, None::<(&str, &str)>).await {
@@ -277,15 +277,13 @@ pub async fn path_python_version() -> Result<Option<Version>> {
     };
 
     // check the version string
-    let version_txt = prog
-        .messages
-        .get(0)
-        .ok_or({
-            // malformed output; python probably doesn't exist
+    let version_txt = match prog.messages.get(0) {
+        Some(s) => s.text(),
+        None => {
             log::info!("python exe failed to output proper data; assuming it doesn't exist");
             return Ok(None);
-        })?
-        .text();
+        }
+    };
     let version = Version::from_str(version_txt)?;
     Ok(Some(version))
 }
