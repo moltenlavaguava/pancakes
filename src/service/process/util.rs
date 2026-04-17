@@ -236,25 +236,39 @@ pub async fn path_python_version() -> Result<Option<Version>> {
         })?
     };
     // #[cfg(target_os = "macos")]
+    #[cfg(target_os = "macos")]
     let prog = {
         let shell_cmd = format!(
             r#"
-        python_bin=""
+        best_path=""
+        best_ver=""
 
         for candidate in $(which -a python3 2>/dev/null) $(which -a python 2>/dev/null); do
-            if [ -x "$candidate" ] && [ "$candidate" != "/usr/bin/python3" ] && [ "$candidate" != "/usr/bin/python" ]; then
-                python_bin="$candidate"
-                break
+            # Must exist and be executable
+            [ -x "$candidate" ] || continue
+
+            # Skip Apple's stub/system python entries
+            [ "$candidate" = "/usr/bin/python3" ] && continue
+            [ "$candidate" = "/usr/bin/python" ] && continue
+
+            # Ask this interpreter for its version
+            ver=$("$candidate" -c "import sys; print(f'{{sys.version_info.major}}.{{sys.version_info.minor}}.{{sys.version_info.micro}}')" 2>/dev/null) || continue
+
+            # Must be able to run your actual snippet too
+            "$candidate" -c "{}" >/dev/null 2>&1 || continue
+
+            # Keep the highest semantic version found
+            if [ -z "$best_ver" ] || [ "$(printf '%s\n%s\n' "$best_ver" "$ver" | sort -V | tail -n1)" = "$ver" ]; then
+                best_ver="$ver"
+                best_path="$candidate"
             fi
         done
 
-        if [ -z "$python_bin" ]; then
-            exit 127
-        fi
+        [ -n "$best_path" ] || exit 127
 
-        "$python_bin" -c "{}"
+        "$best_path" -c "{}"
         "#,
-            python_code
+            python_code, python_code
         );
 
         let cmd = "zsh";
