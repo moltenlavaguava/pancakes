@@ -21,7 +21,7 @@ impl Into<Message> for InstallMessage {
 pub fn update(app: &mut App, msg: InstallMessage) -> Task<Message> {
     match msg {
         InstallMessage::InstallPython => {
-            println!("Install python");
+            log::info!("Install python");
             // create the install python modal
             let modal = InstallModal::new();
             app.data.modal = Some(Modal::Install(modal));
@@ -29,7 +29,7 @@ pub fn update(app: &mut App, msg: InstallMessage) -> Task<Message> {
             util::verify_uv_to_modal(app.communication.process_sender.clone())
         }
         InstallMessage::Environment => {
-            println!("Setup virtual environment");
+            log::info!("Setup virtual environment");
             let modal = EnvModal::new();
             app.data.modal = Some(Modal::Environment(modal));
             Task::none()

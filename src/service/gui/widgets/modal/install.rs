@@ -1,6 +1,6 @@
 use iced::{
     Element, Length, Task,
-    widget::{column, container, row, space},
+    widget::{column, container, markdown, row, space},
 };
 
 use crate::service::{
@@ -11,6 +11,7 @@ use crate::service::{
         util,
         widgets::{
             button::{default_text_button, secondary_text_button},
+            markdown::default_markdown,
             modal::{
                 AbstractModal,
                 AbstractModalMessage::{Global, Local},
@@ -42,6 +43,7 @@ pub struct InstallModal {
     release_data: Option<CurrentReleaseData>,
     install_state: InstallState,
     uv_install_state: UVInstallState,
+    content_markdown: Vec<markdown::Item>,
 }
 
 #[derive(Debug, Clone)]
@@ -150,7 +152,7 @@ impl AbstractModal<Message> for InstallModal {
                         }
                         (UVVerifyResult::Error | UVVerifyResult::NotFound, _) => {
                             let content = default_text(
-                                "uv not found. uv is a custom Python installation \
+                                "uv was not found. uv is a custom Python installation \
                                 manager and is the core depdendency that pancakes uses. To continue installing Python, \
                                 please select Next below to automatically install uv to your system. \
                                 Note: uv is quite small, battle tested, and ~10-100x faster than standard Python tools \
@@ -169,137 +171,35 @@ impl AbstractModal<Message> for InstallModal {
                 };
                 let cancel_button =
                     secondary_text_button("Cancel", theme).on_press(Global(Message::HideModal));
-                let lower_buttons = row![space().width(Length::Fill), cancel_button, next_button];
+                let lower_buttons =
+                    row![space().width(Length::Fill), cancel_button, next_button].spacing(10);
 
-                column![title, content, lower_buttons].into()
+                column![title, content, lower_buttons].spacing(10).into()
             }
             Page::Versions => {
                 let title = title_text("Step 2: Versioning", theme, true, true);
-                let (content, next_button) = match &self.release_data {
-                    Some(d) => {
-                        let same_version = matches!(
-                            (&app.data.path_python_version, &d.latest_release),
-                            (PathPythonState::Version(c), Some(v)) if c == v
-                        );
-                        let mut content = column![
-                            default_text(
-                                format!(
-                                    "Current Python version: {}",
-                                    match &app.data.path_python_version {
-                                        PathPythonState::Error =>
-                                            String::from("error (this is a bug)"),
-                                        PathPythonState::NotFound => String::from("none found"),
-                                        PathPythonState::Unknown => String::from("loading..."),
-                                        PathPythonState::Version(v) => v.to_string(),
-                                    }
-                                ),
-                                theme,
-                                true,
-                                true
-                            ),
-                            default_text(
-                                format!(
-                                    "Installing version: {}",
-                                    match &d.latest_release {
-                                        Some(v) => v.to_string(),
-                                        None => String::from(
-                                            "none..? (This is a bug, please report it)"
-                                        ),
-                                    }
-                                ),
-                                theme,
-                                true,
-                                true
-                            )
-                        ];
-
-                        if same_version {
-                            content = content.push(default_text(
-                                "Note: the installing version is the same \
-                            as the current version. You can still continue just fine, but \
-                            it is likely nothing will change.",
-                                theme,
-                                true,
-                                true,
-                            ))
-                        }
-
-                        let next_button = default_text_button("Next", theme)
-                            .on_press(Local(InstallModalMsg::ToConfirmPage));
-                        let content: Element<_> = content.into();
-                        (content, next_button)
-                    }
-                    None => {
-                        let content =
-                            default_text("Loading current Python versions..", theme, true, true)
-                                .into();
-                        let next_button = default_text_button("Next", theme);
-
-                        (content, next_button)
-                    }
+                let next_button = match &self.release_data {
+                    Some(d) => default_text_button("Next", theme)
+                        .on_press(Local(InstallModalMsg::ToConfirmPage)),
+                    None => default_text_button("Next", theme),
                 };
                 let cancel_button =
                     secondary_text_button("Cancel", theme).on_press(Global(Message::HideModal));
                 let lower_buttons = row![space().width(Length::Fill), cancel_button, next_button];
 
-                column![title, content, lower_buttons].into()
+                let content = default_markdown(&self.content_markdown, |l| Message::Link(l), theme)
+                    .map(Global);
+                column![title, content, lower_buttons.spacing(10)]
+                    .spacing(10)
+                    .into()
             }
             Page::Confirm => {
                 let title = title_text("Step 3: Confirm", theme, true, true);
                 let lower_content: Element<_> = match &self.release_data {
                     Some(d) => {
-                        let content: Element<_> = match &self.install_state {
-                            InstallState::NotStarted => {
-                                let (display_version, cmd_version) = match &d.latest_release {
-                                    Some(r) => (r.to_string(), r.to_string()),
-                                    None => (
-                                        String::from("none..? (This is a bug, please report it)"),
-                                        String::from("<version>"),
-                                    ),
-                                };
-
-                                column![
-                                    default_text(
-                                        format!("Installing Python {}:", display_version),
-                                        theme,
-                                        true,
-                                        true
-                                    ),
-                                    default_text(
-                                        format!(
-                                            "To do this, the following command will be done:\n\
-                                    'uv python install {} -r --default --preview-features python-install-default'", cmd_version
-                                        ),
-                                        theme,
-                                        true,
-                                        true
-                                    )
-                                ]
-                                .into()
-                            }
-                            InstallState::Working => {
-                                default_text("Downloading python..", theme, true, true).into()
-                            }
-                            InstallState::Completed => {
-                                column![
-                                    default_text("Downloading complete!", theme, true, true),
-                                default_text("Please keep in mind the following:\n\
-                                1. Due to system limitations, every program (such as pancakes, VS Code, or terminal windows) \
-                                needs to be restarted to see newly installed Python versions.\n\
-                                2. When installing Python, pancakes does not add pip to the system PATH. This means you will \
-                                need to run python -m pip instead of pip anytime you want to use the command. \
-                                However, for many reasons, it is recommended to never use this command by itself, rather using \
-                                uv and virtual environments. To learn more, please read the guides :D.", theme, true, true),
-                                ].into()
-                            }
-                            InstallState::Error => default_text(
-                                "An error occured while downloading",
-                                theme,
-                                true,
-                                true,
-                            )
-                            .into(),
-                        };
+                        let content =
+                            default_markdown(&self.content_markdown, |l| Message::Link(l), theme)
+                                .map(Global);
                         let next_button: Element<_> = match &self.install_state {
                             InstallState::NotStarted => default_text_button("Start", theme)
                                 .on_press(Local(InstallModalMsg::InstallPython))
@@ -317,29 +217,29 @@ impl AbstractModal<Message> for InstallModal {
                                 .on_press(Global(Message::HideModal)),
                         };
                         let lower_buttons =
-                            row![space().width(Length::Fill), cancel_button, next_button];
-                        column![content, lower_buttons].into()
+                            row![space().width(Length::Fill), cancel_button, next_button]
+                                .spacing(10);
+                        column![content, lower_buttons].spacing(10).into()
                     }
                     None => {
-                        let content = default_text(
-                            "Somehow, there is no version data avaliable. This is a bug, please report this!",
-                            theme,
-                            true,
-                            true,
-                        );
+                        let content =
+                            default_markdown(&self.content_markdown, |l| Message::Link(l), theme)
+                                .map(Global);
 
                         let lower_buttons = row![
                             space().width(Length::Fill),
                             secondary_text_button("Cancel", theme)
                         ];
-                        column![content, lower_buttons].into()
+                        column![content, lower_buttons.spacing(10)]
+                            .spacing(10)
+                            .into()
                     }
                 };
 
-                column![title, lower_content].into()
+                column![title, lower_content].spacing(10).into()
             }
         };
-        container(m).width(Length::Fixed(400.0)).into()
+        container(m).width(Length::Fixed(400.0)).padding(20).into()
     }
 
     fn update(
@@ -347,7 +247,7 @@ impl AbstractModal<Message> for InstallModal {
         app: &mut Self::App,
         message: Self::ModalMsg,
     ) -> Task<super::AbstractModalMessage<Self::ModalMsg, Message>> {
-        match message {
+        let task = match message {
             InstallModalMsg::ToConfirmPage => {
                 self.page = Page::Confirm;
                 Task::none()
@@ -400,7 +300,17 @@ impl AbstractModal<Message> for InstallModal {
                 self.uv_install_state = UVInstallState::Complete;
                 Task::none()
             }
-        }
+        };
+
+        // anytime a message comes through, reparse the markdown
+        let mkdn = match self.page {
+            Page::UVVerify => vec![],
+            Page::Versions => calculate_versions_markdown(self, app),
+            Page::Confirm => calculate_confirm_markdown(self, app),
+        };
+        self.content_markdown = mkdn;
+
+        task
     }
     // fn fill_height(&self) -> super::ModalFillAmount {
     //     super::ModalFillAmount::Offset(40)
@@ -419,6 +329,83 @@ impl InstallModal {
             release_data: None,
             install_state: InstallState::NotStarted,
             uv_install_state: UVInstallState::Idle,
+            content_markdown: vec![],
         }
     }
+}
+
+pub fn calculate_versions_markdown(modal: &InstallModal, app: &App) -> Vec<markdown::Item> {
+    match &modal.release_data {
+        Some(d) => {
+            let same_version = matches!(
+                (&app.data.path_python_version, &d.latest_release),
+                (PathPythonState::Version(c), Some(v)) if c == v
+            );
+            let mkdn_text = format!(
+                "Current Python version: `{}`\n\nInstalling version: `{}`{}",
+                match &app.data.path_python_version {
+                    PathPythonState::Error => String::from("error (this is a bug)"),
+                    PathPythonState::NotFound => String::from("none found"),
+                    PathPythonState::Unknown => String::from("loading..."),
+                    PathPythonState::Version(v) => v.to_string(),
+                },
+                match &d.latest_release {
+                    Some(v) => v.to_string(),
+                    None => String::from("none..? (This is a bug, please report it)"),
+                },
+                if same_version {
+                    "\n\nNote: the installing version is the same \
+                            as the current version. You can still continue just fine, but \
+                            it is likely nothing will change."
+                } else {
+                    ""
+                }
+            );
+            // parse markdown
+            let mkdn: Vec<markdown::Item> = markdown::parse(&mkdn_text).collect();
+            mkdn
+        }
+        None => markdown::parse("Loading current Python versions..").collect(),
+    }
+}
+pub fn calculate_confirm_markdown(modal: &InstallModal, app: &App) -> Vec<markdown::Item> {
+    let mkdn_text = match &modal.release_data {
+        Some(d) => match &modal.install_state {
+            InstallState::NotStarted => {
+                let (display_version, cmd_version) = match &d.latest_release {
+                    Some(r) => (r.to_string(), r.to_string()),
+                    None => (
+                        String::from("none..? (This is a bug, please report it)"),
+                        String::from("<version>"),
+                    ),
+                };
+                format!(
+                    "Installing: `Python {}`:\n\nTo do this, the following command will be done:\n\n\
+                                    `uv python install {} -r --default --preview-features python-install-default`",
+                    display_version, cmd_version
+                )
+            }
+            InstallState::Working => String::from("Downloading python.."),
+            InstallState::Completed => String::from(
+                "Downloading complete! \
+            Please keep in mind the following:\n \
+            1. Due to system limitations, *every* program (such as pancakes, VS Code, or terminal windows) \
+            needs to be restarted to see newly installed Python versions.\n\
+            2. When installing Python, pancakes does not add pip to the system PATH. This means you will \
+            need to run `python -m pip` instead of `pip` anytime you want to use the command. \
+            However, for many reasons, it is recommended to never use this command by itself, rather using \
+            uv and virtual environments. For more information, please read the guides below.",
+            ),
+            InstallState::Error => String::from(
+                "An error occured while downloading. \
+        It's very possible your internet is not working right now. Otherwise, this is likely \
+        a problem with pancakes itself. Please check the logs for more information!",
+            ),
+        },
+        None => String::from(
+            "Somehow, there is no version data avaliable. This is a bug, please report this!",
+        ),
+    };
+
+    markdown::parse(&mkdn_text).collect()
 }

@@ -148,7 +148,7 @@ pub async fn install_uv() -> Result<()> {
 
     // run the command and wait for it to finish
     let prog = run_process(cmd, args, [("UV_INSTALL_DIR", &bin_dir)]).await?;
-    println!("{prog:?}");
+    log::info!("{prog:?}");
     if prog.was_successful() {
         Ok(())
     } else {
@@ -164,7 +164,7 @@ pub async fn verify_uv(update: bool) -> UVVerifyResult {
     };
 
     let r = run_process(cmd.clone(), ["--version"], None::<(&str, &str)>).await;
-    println!("{r:?}");
+    log::info!("{r:?}");
     let r = match r {
         Ok(r) => r,
         Err(e) => {
@@ -175,7 +175,7 @@ pub async fn verify_uv(update: bool) -> UVVerifyResult {
                 // uv not found, assume it doesn't exist
                 return UVVerifyResult::NotFound;
             } else {
-                eprintln!("An error occured while verifying uv: {e}");
+                log::error!("An error occured while verifying uv: {e}");
                 return UVVerifyResult::Error;
             }
         }
@@ -189,7 +189,7 @@ pub async fn verify_uv(update: bool) -> UVVerifyResult {
     if r.was_successful() {
         UVVerifyResult::Ok
     } else {
-        eprintln!("An error occured while running uv: {:?}", r);
+        log::error!("An error occured while running uv: {:?}", r);
         UVVerifyResult::Error
     }
 }
@@ -214,6 +214,11 @@ pub async fn path_python_version() -> Result<Option<Version>> {
     // make sure this 'python' isn't just the ms store python redirector
     #[cfg(windows)]
     if cmd.to_string_lossy().contains("WindowsApps") {
+        return Ok(None);
+    }
+    // also make sure this python isn't the fake macos one
+    #[cfg(target_os = "macos")]
+    if cmd.starts_with("/usr/bin") {
         return Ok(None);
     }
     let args = [
@@ -250,7 +255,7 @@ pub fn parse_uv_version_json(json: &str) -> Result<CurrentReleaseData> {
 }
 pub async fn install_python(version: Version) -> Result<()> {
     let cmd = uv_exec_path()?;
-    println!("Version: {version}");
+    log::info!("Version: {version}");
     // also update the shell just in case this is the first time
     // the program runs
     let args = [
@@ -272,7 +277,7 @@ pub async fn install_python(version: Version) -> Result<()> {
         bail!("Failed to update system PATH")
     }
 
-    println!("{prog:?}");
+    log::info!("{prog:?}");
     Ok(())
 }
 pub async fn setup_project(path: PathBuf, version: Version) -> Result<()> {
@@ -286,7 +291,7 @@ pub async fn setup_project(path: PathBuf, version: Version) -> Result<()> {
         OsStr::new(&ver_string),
     ];
     let p1 = run_process(cmd, args, NO_ENV).await?;
-    println!("p1: {p1:?}");
+    log::info!("p1: {p1:?}");
 
     #[cfg(windows)]
     {
@@ -298,7 +303,7 @@ pub async fn setup_project(path: PathBuf, version: Version) -> Result<()> {
             "Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force",
         ];
         let p2 = run_process(cmd, args, NO_ENV).await?;
-        println!("p2: {p2:?}");
+        log::info!("p2: {p2:?}");
     }
 
     // copy in include files

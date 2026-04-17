@@ -153,7 +153,9 @@ impl AbstractModal<Message> for EnvModal {
                 title,
                 info_text,
                 confirm_text,
-                row![select_button, file_box].spacing(10),
+                row![select_button, file_box]
+                    .align_y(Alignment::Center)
+                    .spacing(10),
                 container(
                     row![
                         name_txt,
@@ -162,6 +164,7 @@ impl AbstractModal<Message> for EnvModal {
                         cancel_button,
                         confirm_button
                     ]
+                    .align_y(Alignment::Center)
                     .spacing(10)
                 )
                 .align_y(Alignment::Center),
@@ -275,7 +278,7 @@ impl AbstractModal<Message> for EnvModal {
                 }
             }
             EnvMessage::LinkClicked(l) => {
-                println!("clicked: {l:?}");
+                log::info!("clicked: {l:?}");
                 Task::none()
             }
         }

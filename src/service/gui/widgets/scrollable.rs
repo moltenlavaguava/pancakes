@@ -7,29 +7,27 @@ use iced::{
 
 use crate::service::gui::styling::{AppTheme, ContainerStyle, ScrollableStyle};
 
-// Custom virtualized scrollable struct
-pub struct VirtualScrollable<'a, Message, Item, F, L>
+// 1. Hold the slice directly instead of the generic L
+pub struct VirtualScrollable<'a, Message, Item, F>
 where
-    L: AsRef<[Item]>,
-    F: Fn(usize, &Item, &'a Theme) -> Element<'a, Message>,
+    F: Fn(usize, &'a Item, &'a Theme) -> Element<'a, Message>,
 {
-    items: L,
+    items: &'a [Item], // Changed from L to &'a [Item]
     item_height: f32,
     viewport_height: f32,
     scroll_offset: f32,
     theme: &'a Theme,
     render_item: F,
     spacing: f32,
-    _phantom: PhantomData<Item>,
+    _phantom: PhantomData<Message>,
 }
 
-impl<'a, Message: 'a, Item, F, L> VirtualScrollable<'a, Message, Item, F, L>
+impl<'a, Message: 'a, Item: 'a, F> VirtualScrollable<'a, Message, Item, F>
 where
-    L: AsRef<[Item]>,
-    F: Fn(usize, &Item, &'a Theme) -> Element<'a, Message>,
+    F: Fn(usize, &'a Item, &'a Theme) -> Element<'a, Message>,
 {
     pub fn new(
-        items: L,
+        items: &'a [Item], // Accepts the slice
         item_height: f32,
         viewport_height: f32,
         scroll_offset: f32,
@@ -50,56 +48,39 @@ where
     }
 
     pub fn build(self) -> Column<'a, Message> {
-        let items_slice = self.items.as_ref();
-        let total_items = items_slice.len();
+        let total_items = self.items.len();
 
         let items_per_screen = (self.viewport_height / self.item_height).ceil() as usize;
-        let visible_count = items_per_screen;
+        let visible_count = items_per_screen + 2; // Buffer for smooth scrolling
         let raw_start_index = (self.scroll_offset / self.item_height).floor() as usize;
-        let max_start_index = total_items.saturating_sub(visible_count);
-        let start_index = raw_start_index.min(max_start_index);
+        let start_index = raw_start_index.min(total_items.saturating_sub(1));
         let end_index = (start_index + visible_count).min(total_items);
 
         let top_spacer = start_index as f32 * self.item_height;
         let bottom_spacer = (total_items.saturating_sub(end_index)) as f32 * self.item_height;
 
-        let visible_items = column(items_slice[start_index..end_index].iter().enumerate().map(
+        // Now self.items[range] returns items with lifetime 'a
+        // because self.items IS &'a [Item]
+        let visible_items = column(self.items[start_index..end_index].iter().enumerate().map(
             |(ri, item)| {
                 let i = start_index + ri;
                 (self.render_item)(i, item, self.theme)
             },
         ))
-        .width(Length::Fill);
+        .width(Length::Fill)
+        .spacing(self.spacing);
 
         column![
             space().height(top_spacer),
-            visible_items.spacing(self.spacing),
+            visible_items,
             space().height(bottom_spacer),
         ]
         .width(Length::Fill)
     }
 }
 
-// fn build_scrollable<'a, Message>(
-//     content: impl Into<Element<'a, Message>>,
-//     style: ScrollableStyle,
-//     container_style: ContainerStyle,
-// ) -> Scrollable<'a, Message> {
-//     Scrollable::new(content)
-//         .style(style.style(container_style))
-//         .spacing(0)
-// }
-// pub fn main_content<'a, Message>(
-//     content: impl Into<Element<'a, Message>>,
-//     theme: &Theme,
-// ) -> Scrollable<'a, Message> {
-//     let ss = theme.stylesheet();
-//     let style = ss.default_scrollable();
-//     let container_style = ss.main_content();
-//     build_scrollable(content, style, container_style)
-// }
-pub fn virtualized_vertical_scrollable<'a, Message, Item, F, L, S>(
-    items: L,
+pub fn virtualized_vertical_scrollable<'a, Message, Item, F, S>(
+    items: &'a [Item], // Take the slice directly
     item_height: f32,
     scroll_offset: f32,
     theme: &'a Theme,
@@ -108,22 +89,25 @@ pub fn virtualized_vertical_scrollable<'a, Message, Item, F, L, S>(
     container_style: ContainerStyle,
     on_scroll: S,
     spacing: f32,
-    modify_scrollable: impl Fn(Scrollable<'a, Message>) -> Scrollable<'a, Message> + 'a,
+    modify_scrollable: impl Fn(
+        iced::widget::Scrollable<'a, Message>,
+    ) -> iced::widget::Scrollable<'a, Message>
+    + 'a,
 ) -> Element<'a, Message>
 where
     Message: 'a,
-    L: AsRef<[Item]> + 'a,
-    F: Fn(usize, &Item, &'a Theme) -> Element<'a, Message> + 'a,
-    S: Fn(scrollable::Viewport) -> Message + 'a + Clone,
+    Item: 'a,
+    F: Fn(usize, &'a Item, &'a Theme) -> Element<'a, Message> + 'a + Clone,
+    S: Fn(iced::widget::scrollable::Viewport) -> Message + 'a + Clone,
 {
     responsive(move |size| {
         let content = VirtualScrollable::new(
-            &items,
+            items, // items is a slice reference, which is Copy
             item_height,
             size.height,
             scroll_offset,
             theme,
-            &render_item,
+            render_item.clone(),
             spacing,
         )
         .build();
@@ -131,8 +115,8 @@ where
         modify_scrollable(
             scrollable(content)
                 .height(Length::Fill)
-                .on_scroll(on_scroll.clone())
                 .width(Length::Fill)
+                .on_scroll(on_scroll.clone())
                 .style(style.style(container_style))
                 .spacing(0),
         )

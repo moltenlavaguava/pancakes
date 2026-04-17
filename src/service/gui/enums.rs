@@ -12,6 +12,7 @@ pub enum EventMessage {}
 pub enum Page {
     Home,
     Guide(u32), // guide id
+    Dev,
 }
 
 #[derive(Debug, Clone)]

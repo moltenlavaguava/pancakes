@@ -223,6 +223,7 @@ pub struct Stylesheet {
     pub default_modal_background_alpha: f32,
     pub link_color: Color,
     pub markdown_code_border_color: Color,
+    pub guide_tag_border_color: Color,
 }
 impl Stylesheet {
     pub fn default_text(&self, wrap_text: bool, center_y: bool) -> TextStyle {
@@ -429,6 +430,14 @@ impl Stylesheet {
         default.status_bgs = self.guide_button_status_bgs;
         default
     }
+    pub fn guide_tag_container(&self) -> ContainerStyle {
+        let mut home_border = self.home_widget_container().border;
+        home_border.color = self.guide_tag_border_color;
+        ContainerStyle {
+            bg_color: Some(self.sub_content_bg),
+            border: home_border,
+        }
+    }
 }
 
 // Color palettes
@@ -481,6 +490,7 @@ const DARK_STYLESHEET: Stylesheet = Stylesheet {
     default_modal_background_alpha: 0.6,
     link_color: color!(68, 147, 248),
     markdown_code_border_color: color!(26, 26, 26),
+    guide_tag_border_color: color!(14, 96, 230),
 };
 
 // Tack on app stylesheet data to any theme

@@ -20,12 +20,12 @@ where
 {
     let name = service.name();
 
-    println!("Initializing {}...", name);
+    log::info!("Initializing {}...", name);
     if let Err(e) = service.on_start().await {
-        eprintln!("Error: {} failed to start: {:?}", name, e);
+        log::error!("Error: {} failed to start: {:?}", name, e);
         return;
     }
-    println!("{name} started");
+    log::info!("{name} started");
     loop {
         tokio::select! {
             _ = token.cancelled() => break,
@@ -34,5 +34,5 @@ where
             }
         }
     }
-    println!("{} stopped.", name);
+    log::info!("{} stopped.", name);
 }

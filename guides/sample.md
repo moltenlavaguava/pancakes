@@ -60,7 +60,7 @@ pub fn update(app: &mut App, msg: GuideMessage) -> Task<Message> {
             Task::none()
         }
         GuideMessage::MarkdownInteraction(s) => {
-            println!("interaction: {s}");
+            log::info!("interaction: {s}");
             let _ = open::that(s);
             Task::none()
         }

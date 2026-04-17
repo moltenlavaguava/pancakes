@@ -7,7 +7,7 @@ use crate::service::{
     request::RequestService,
 };
 
-pub fn run_program() {
+pub fn run_program(log_rx: mpsc::UnboundedReceiver<String>) {
     let runtime = Runtime::new().expect("Failed to create tokio runtime");
     let end_token = CancellationToken::new();
     let _guard = runtime.enter();
@@ -38,7 +38,7 @@ pub fn run_program() {
     };
 
     // start gui
-    run_gui(r_gui_event, t_request, t_file, t_process).expect("Failed to start gui");
+    run_gui(r_gui_event, t_request, t_file, t_process, log_rx).expect("Failed to start gui");
 
     // send request to end program
     end_token.cancel();

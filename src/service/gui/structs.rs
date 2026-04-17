@@ -1,6 +1,6 @@
 use std::{collections::HashMap, path::Path};
 
-use iced::widget::image;
+use iced::widget::{image, markdown};
 
 use crate::service::{
     file::FileSender,
@@ -49,6 +49,24 @@ impl IdCounter {
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct DevLogData {
+    pub log_scroll_offset: f32,
+    pub info_markdown: Vec<markdown::Item>,
+}
+impl DevLogData {
+    pub fn new() -> Self {
+        let info_txt = "**Note:** this page is only for debugging! It only exists to get more information about errors. \
+    If you do not know what you are doing, click the back arrow above.";
+        let info_markdown: Vec<markdown::Item> = markdown::parse(info_txt).collect();
+
+        Self {
+            log_scroll_offset: 0.0,
+            info_markdown,
+        }
+    }
+}
+
 pub struct GuiCommunication {
     pub event_receiver: ReceiverHandle<EventMessage>,
     pub active_tasks: HashMap<TaskId, ReceiverHandle<Message>>,
@@ -68,6 +86,7 @@ pub struct GuiGeneralData {
     pub path_python_version: PathPythonState,
     pub image_registry: ImageRegistry,
     pub guide_registry: GuideRegistry,
+    pub dev_data: DevLogData,
 }
 
 // image registry handling

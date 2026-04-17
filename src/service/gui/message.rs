@@ -2,7 +2,7 @@ use crate::service::gui::{
     enums::{EventMessage, PathPythonState},
     structs::TaskId,
     sync::ReceiverHandle,
-    update::{guide::GuideMessage, install::InstallMessage},
+    update::{dev::DevMessage, guide::GuideMessage, install::InstallMessage},
     widgets::modal::ModalMessage,
 };
 
@@ -19,4 +19,9 @@ pub enum Message {
     PathPythonVersion(PathPythonState),
     RestartNeeded,
     Home,
+    Log(String),
+    SaveLog,
+    Dev,
+    Link(String),
+    DevMessage(DevMessage),
 }

@@ -26,7 +26,7 @@ pub fn install_uv_to_modal(process_sender: ProcessSender) -> Task<Message> {
         let vr = match r {
             Ok(_) => UVVerifyResult::Ok,
             Err(e) => {
-                eprintln!("An error occured while installing uv: {e}");
+                log::error!("An error occured while installing uv: {e}");
                 UVVerifyResult::Error
             }
         };

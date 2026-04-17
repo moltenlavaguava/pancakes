@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use futures::channel::mpsc::UnboundedReceiver;
 use iced::{Element, Subscription, Task, Theme, window};
 use tokio::sync::mpsc;
 
@@ -8,9 +9,9 @@ use crate::service::gui::enums::{EventMessage, Page, PathPythonState};
 use crate::service::gui::learn::LearnData;
 use crate::service::gui::message::Message;
 use crate::service::gui::page::guide::{self, GuideRegistry};
-use crate::service::gui::page::home;
+use crate::service::gui::page::{dev, home};
 use crate::service::gui::structs::{
-    GuiCommunication, GuiGeneralData, GuiManagement, IdCounter, ImageRegistry,
+    DevLogData, GuiCommunication, GuiGeneralData, GuiManagement, IdCounter, ImageRegistry,
 };
 use crate::service::gui::sync::ReceiverHandle;
 use crate::service::process::ProcessSender;
@@ -20,6 +21,7 @@ pub mod enums;
 mod external;
 mod icons;
 mod learn;
+pub mod logging;
 pub mod message;
 mod page;
 pub mod structs;
@@ -33,12 +35,18 @@ pub struct App {
     communication: GuiCommunication,
     management: GuiManagement,
     data: GuiGeneralData,
+    logs: Vec<String>,
+    theme: Theme,
 }
 impl App {
     fn new(flags: GuiFlags) -> (Self, Task<Message>) {
+        // create log listening task
+        let mut active_tasks = HashMap::new();
+        active_tasks.insert(flags.log_rx.id(), flags.log_rx);
+
         let communication = GuiCommunication {
             event_receiver: flags.receiver_handle,
-            active_tasks: HashMap::new(),
+            active_tasks,
             request_sender: flags.request_sender,
             file_sender: flags.file_sender,
             process_sender: flags.process_sender,
@@ -46,11 +54,12 @@ impl App {
         let management = GuiManagement {
             task_id_counter: flags.task_id_counter,
         };
-        let learn_data = LearnData {
-            home_search: String::new(),
-        };
         let ir = ImageRegistry::new();
         let gr = GuideRegistry::new();
+        let learn_data = LearnData {
+            home_search: String::new(),
+            search_match_guide_ids: gr.guides.keys().map(|k| *k).collect(),
+        };
         let data = GuiGeneralData {
             modal: None,
             page: Page::Home,
@@ -59,11 +68,14 @@ impl App {
             restart_needed: false,
             image_registry: ir,
             guide_registry: gr,
+            dev_data: DevLogData::new(),
         };
         let app = Self {
             communication,
             management,
             data,
+            logs: vec![],
+            theme: Theme::Dark,
         };
         // get current path python version
         let task = util::path_python_version(app.communication.process_sender.clone());
@@ -76,6 +88,7 @@ impl App {
         match &self.data.page {
             Page::Home => home::view(self),
             Page::Guide(id) => guide::view(*id, self),
+            Page::Dev => dev::view(self),
         }
     }
     fn subscription(&self) -> Subscription<Message> {
@@ -93,7 +106,7 @@ impl App {
         Subscription::batch(vec![bus, tasks])
     }
     fn theme(&self) -> Theme {
-        Theme::Dark
+        self.theme.clone()
     }
 }
 
@@ -104,6 +117,7 @@ struct GuiFlags {
     process_sender: ProcessSender,
     file_sender: FileSender,
     task_id_counter: IdCounter,
+    log_rx: ReceiverHandle<Message>,
 }
 
 pub fn run_gui(
@@ -111,10 +125,14 @@ pub fn run_gui(
     request_sender: RequestSender,
     file_sender: FileSender,
     process_sender: ProcessSender,
+    log_rx: mpsc::UnboundedReceiver<String>,
 ) -> iced::Result {
     // convert basic event receiver to handle
     let mut task_id_counter = IdCounter::new();
     let receiver_handle = ReceiverHandle::new(task_id_counter.next(), event_reciever);
+
+    // create logging rh
+    let log_rx = ReceiverHandle::new_unbounded(task_id_counter.next(), log_rx).map(Message::Log);
 
     let flags = GuiFlags {
         receiver_handle,
@@ -122,6 +140,7 @@ pub fn run_gui(
         request_sender,
         file_sender,
         process_sender,
+        log_rx,
     };
 
     let icon = window::icon::from_file_data(include_bytes!("../../icon.png"), None).ok();

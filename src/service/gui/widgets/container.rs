@@ -52,3 +52,10 @@ pub fn default_modal_background_container<'a, Message>(
     let ss = theme.stylesheet().default_modal_background();
     build_container(content, ss)
 }
+pub fn guide_tag_container<'a, Message>(
+    content: impl Into<Element<'a, Message>>,
+    theme: &Theme,
+) -> Container<'a, Message> {
+    let ss = theme.stylesheet().guide_tag_container();
+    build_container(content, ss)
+}

@@ -2,6 +2,7 @@ use iced::Task;
 
 use crate::service::gui::{App, enums::Page, message::Message};
 
+pub mod dev;
 pub mod guide;
 pub mod install;
 
@@ -11,7 +12,7 @@ pub fn update(app: &mut App, msg: Message) -> Task<Message> {
             todo!()
         }
         Message::EventBusClosed => {
-            println!("event bus closed");
+            log::info!("event bus closed");
             Task::none()
         }
         Message::TaskFinished(id) => {
@@ -49,5 +50,24 @@ pub fn update(app: &mut App, msg: Message) -> Task<Message> {
             app.data.page = Page::Home;
             Task::none()
         }
+        Message::Log(s) => {
+            // add string to the list
+            app.logs.push(s);
+            Task::none()
+        }
+        Message::SaveLog => {
+            todo!();
+            Task::none()
+        }
+        Message::Dev => {
+            app.data.page = Page::Dev;
+            Task::none()
+        }
+        Message::Link(l) => {
+            log::info!("link clicked: {l}");
+            let _ = open::that(l);
+            Task::none()
+        }
+        Message::DevMessage(m) => dev::update(app, m),
     }
 }

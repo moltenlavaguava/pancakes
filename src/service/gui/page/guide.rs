@@ -4,7 +4,7 @@ use iced::{
 };
 use indexmap::IndexMap;
 use serde::Deserialize;
-use strum::EnumString;
+use strum::{Display, EnumString};
 
 use crate::service::gui::{
     App, icons,
@@ -39,20 +39,14 @@ struct ManifestEntry {
     slug: String,
     name: String,
     pinned: bool,
-    tags: Vec<Tag>,
+    tags: Vec<String>,
 }
 
 pub struct Guide {
     pub pinned: bool,
     pub name: String,
     pub markdown: Vec<markdown::Item>,
-    pub tags: Vec<Tag>,
-}
-
-#[derive(Deserialize, EnumString)]
-pub enum Tag {
-    Windows,
-    Mac,
+    pub tags: Vec<String>,
 }
 
 #[derive(rust_embed::RustEmbed)]
@@ -64,6 +58,7 @@ pub struct GuideRegistry {
 }
 impl GuideRegistry {
     pub fn new() -> GuideRegistry {
+        let mut pinned_guides = IndexMap::new();
         let mut guides = IndexMap::new();
         let mut id_counter = IdCounter::new();
         let manifest = GuideAssets::get("manifest.json").expect("manifest.json is missing");
@@ -82,16 +77,32 @@ impl GuideRegistry {
                 markdown: markdown::parse(content).collect(),
             };
 
-            guides.insert(id_counter.next(), guide);
+            let id = id_counter.next();
+            if guide.pinned {
+                pinned_guides.insert(id, guide);
+            } else {
+                guides.insert(id, guide);
+            }
         }
 
-        GuideRegistry { guides }
+        // sort both kinds of guides
+        let sort_guide = |_k1: &u32, v1: &Guide, _k2: &u32, v2: &Guide| {
+            v1.name.to_lowercase().cmp(&v2.name.to_lowercase())
+        };
+        pinned_guides.sort_unstable_by(sort_guide);
+        guides.sort_unstable_by(sort_guide);
+
+        pinned_guides.append(&mut guides);
+
+        GuideRegistry {
+            guides: pinned_guides,
+        }
     }
 }
 
 pub fn view<'a>(guide_id: u32, app: &'a App) -> Element<'a, Message> {
     // get the guide from the id
-    let theme = &app.theme();
+    let theme = &app.theme;
     let Some(guide) = app.data.guide_registry.guides.get(&guide_id) else {
         return default_text(
             "Error: failed to get guide from guide id. \
@@ -122,7 +133,7 @@ pub fn view<'a>(guide_id: u32, app: &'a App) -> Element<'a, Message> {
         default_scrollable(
             column![markdown_with_images(
                 &guide.markdown,
-                |s| GuideMessage::MarkdownInteraction(s).into(),
+                |s| Message::Link(s),
                 &app.data.image_registry,
                 theme,
             )]
