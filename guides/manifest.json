@@ -1,3 +1,26 @@
 [
-    
+    {
+        "slug": "Installing Packages.md",
+        "name": "Installing Packages",
+        "pinned": false,
+        "tags": ["Universal"]
+    },
+    {
+        "slug": "Jupiter-notebook-guide.md",
+        "name": "Getting Started with Juypter Notebooks",
+        "pinned": false,
+        "tags": ["Universal", "VS Code"]
+    },
+    {
+        "slug": "Mac Guide.md",
+        "name": "Using Pancakes for Mac",
+        "pinned": false,
+        "tags": ["macOS"]
+    },
+    {
+        "slug": "Windows Guide.md",
+        "name": "Using Pancakes for Windows",
+        "pinned": false,
+        "tags": ["Windows"]
+    }
 ]
