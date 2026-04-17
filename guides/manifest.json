@@ -13,14 +13,14 @@
     },
     {
         "slug": "Mac Guide",
-        "name": "Using Pancakes for Mac",
-        "pinned": false,
+        "name": "Using Pancakes for Mac (Start here!)",
+        "pinned": true,
         "tags": ["macOS"]
     },
     {
         "slug": "Windows Guide",
-        "name": "Using Pancakes for Windows",
-        "pinned": false,
+        "name": "Using Pancakes for Windows (Start here!)",
+        "pinned": true,
         "tags": ["Windows"]
     }
 ]
