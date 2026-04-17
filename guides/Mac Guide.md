@@ -1,5 +1,3 @@
-# Using Pancakes On Mac
-
 ## Installing Pancakes
 
 1. Unzip `pancakes-macOS-Universal.zip`
@@ -46,9 +44,11 @@
 ![Python Interpreter Selection in VS Code](select-interpreter.png)
 
 ## Future Use Of Pancakes
-Anytime you want to create a new folder and new virtual environment pancakes' `Create Virtual Environment Tool` can help. 
+Anytime you want to create a project pancakes' `Create Virtual Environment Tool` can help. 
 
 Some exaples of reasons to create new project folders:
 * Personal Projects
 * A New Class
+
+Happy coding!
 
