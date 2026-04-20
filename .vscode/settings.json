@@ -3,7 +3,9 @@
         "ipykernel",
         "ipynb",
         "Juypter",
+        "Keymap",
         "matplotlib",
+        "microcontroller",
         "numpy",
         "venv"
     ]

@@ -24,9 +24,16 @@ To run Jupyter Notebooks, you need the extensions: `Jupyter`, `Jupyter Cell Tags
 
 To use the serial monitor for a microcontroller, you need the extension: Serial Monitor.
 
+### Installing Extensions:
+1. Click the button on the left tool bar in VS Code with 4 squares or do the keyboard shortcut `Ctrl` + `Shift` + `X` 
+2. Search for and click install on the `Python`, `Jupyter`, and `Serial Monitor` extensions.
+![Python Extension Install](extentions)
+![Python Extension Install](Jupyter-extention)
+
+
 Note: if there is any error running the `main.py` file, make sure to follow steps 2 and 3 to select the interpreter.
 1. Attempt to run `main.py`; an error should pop up saying `An Invalid Python interpreter is selected…` If no errors pop up and "Hello world" is printed in the terminal then steps 2 and 3 can be skipped.
 2. Click `Select Python Interpreter`
 3. Click the option which says `Recommended`. If nothing is recommended select the option that contains `.venv`
 
-![Python Interpreter Selection in VS Code](select-interpreter.png)
+![Python Interpreter Selection in VS Code](select-interpreter)
