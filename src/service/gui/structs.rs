@@ -16,7 +16,7 @@ use crate::service::{
     request::RequestSender,
 };
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Counter {
     n: u64,
 }
@@ -34,7 +34,7 @@ impl Counter {
     }
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct IdCounter {
     counter: Counter,
 }
@@ -67,6 +67,7 @@ impl DevLogData {
     }
 }
 
+#[derive(Debug, Clone)]
 pub struct GuiCommunication {
     pub event_receiver: ReceiverHandle<EventMessage>,
     pub active_tasks: HashMap<TaskId, ReceiverHandle<Message>>,
@@ -74,10 +75,13 @@ pub struct GuiCommunication {
     pub file_sender: FileSender,
     pub process_sender: ProcessSender,
 }
+
+#[derive(Debug, Clone)]
 pub struct GuiManagement {
     pub task_id_counter: IdCounter,
 }
 
+#[derive(Debug, Clone)]
 pub struct GuiGeneralData {
     pub modal: Option<Modal>,
     pub learn_data: LearnData,
@@ -94,6 +98,7 @@ pub struct GuiGeneralData {
 #[folder = "images/"]
 struct Asset;
 
+#[derive(Debug, Clone)]
 pub struct ImageRegistry {
     images: HashMap<String, image::Handle>,
 }

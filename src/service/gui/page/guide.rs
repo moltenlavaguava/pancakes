@@ -1,6 +1,7 @@
 use iced::{
-    Alignment, Element, Length, Padding,
+    Alignment, Element, Length, Padding, Theme,
     widget::{column, container, markdown, row},
+    window,
 };
 use indexmap::IndexMap;
 use serde::Deserialize;
@@ -42,6 +43,7 @@ struct ManifestEntry {
     tags: Vec<String>,
 }
 
+#[derive(Debug, Clone)]
 pub struct Guide {
     pub pinned: bool,
     pub name: String,
@@ -53,6 +55,7 @@ pub struct Guide {
 #[folder = "guides/"]
 struct GuideAssets;
 
+#[derive(Debug, Clone)]
 pub struct GuideRegistry {
     pub guides: IndexMap<u32, Guide>,
 }
@@ -100,9 +103,13 @@ impl GuideRegistry {
     }
 }
 
-pub fn view<'a>(guide_id: u32, app: &'a App) -> Element<'a, Message> {
+pub fn view<'a>(
+    guide_id: u32,
+    app: &'a App,
+    theme: &'a Theme,
+    window_id: window::Id,
+) -> Element<'a, Message> {
     // get the guide from the id
-    let theme = &app.theme;
     let Some(guide) = app.data.guide_registry.guides.get(&guide_id) else {
         return default_text(
             "Error: failed to get guide from guide id. \
@@ -117,7 +124,8 @@ pub fn view<'a>(guide_id: u32, app: &'a App) -> Element<'a, Message> {
     // build the guide page
     let back_button = {
         let ts = theme.stylesheet().title_text(true, true);
-        invisible_button(icon_text(icons::LEFT_ARROW, ts), theme).on_press(Message::Home)
+        invisible_button(icon_text(icons::LEFT_ARROW, ts), theme)
+            .on_press(Message::CloseWindow(window_id))
     };
     let title_text = title_text(&guide.name, theme, true, true).height(Length::Shrink);
     let header = container(column![

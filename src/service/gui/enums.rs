@@ -2,16 +2,14 @@ use anyhow::Result;
 use pep440_rs::Version;
 use tokio::sync::mpsc;
 
-use crate::service::gui::page::guide::Guide;
-
 pub type EventSender = mpsc::Sender<EventMessage>;
 
 #[derive(Debug, Clone)]
 pub enum EventMessage {}
 
+#[derive(Debug, Clone)]
 pub enum Page {
     Home,
-    Guide(u32), // guide id
     Dev,
 }
 

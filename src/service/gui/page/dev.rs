@@ -18,10 +18,9 @@ use crate::service::gui::{
     },
 };
 use iced::widget::{column, container, markdown, row};
-use iced::{Alignment, Element, Font, Length, Padding};
+use iced::{Alignment, Element, Font, Length, Padding, Theme};
 
-pub fn view<'a>(app: &'a App) -> Element<'a, Message> {
-    let theme = &app.theme;
+pub fn view<'a>(app: &'a App, theme: &'a Theme) -> Element<'a, Message> {
     // build the dev page
     let back_button = {
         let ts = theme.stylesheet().title_text(true, true);
