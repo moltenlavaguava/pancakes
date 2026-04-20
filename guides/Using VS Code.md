@@ -2,7 +2,7 @@
 
 1. Download VS Code here: [https://code.visualstudio.com/](https://code.visualstudio.com/)
 
-![VS Code Download](windows-vscode.png)
+![VS Code Download](windows-vscode)
 
 ## Opening Projects
 
@@ -25,10 +25,12 @@ To run Jupyter Notebooks, you need the extensions: `Jupyter`, `Jupyter Cell Tags
 To use the serial monitor for a microcontroller, you need the extension: Serial Monitor.
 
 ### Installing Extensions:
+
 1. Click the button on the left tool bar in VS Code with 4 squares or do the keyboard shortcut `Ctrl` + `Shift` + `X` 
+
 2. Search for and click install on the `Python`, `Jupyter`, and `Serial Monitor` extensions.
+
 ![Python Extension Install](extentions)
-![Python Extension Install](Jupyter-extention)
 
 
 Note: if there is any error running the `main.py` file, make sure to follow steps 2 and 3 to select the interpreter.
