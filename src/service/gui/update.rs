@@ -80,7 +80,7 @@ pub fn update(mapp: &mut MultiApp, msg: Message) -> Task<Message> {
         Message::CloseWindow(id) => {
             mapp.windows.remove(&id);
             println!("closing window");
-            if mapp.windows.is_empty() {
+            if mapp.windows.is_empty() || id == mapp.main_id {
                 iced::exit()
             } else {
                 window::close(id)
