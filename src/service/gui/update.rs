@@ -77,6 +77,14 @@ pub fn update(mapp: &mut MultiApp, msg: Message) -> Task<Message> {
             log::warn!("Window message update called twice");
             Task::none()
         }
-        Message::CloseWindow(id) => window::close(id),
+        Message::CloseWindow(id) => {
+            mapp.windows.remove(&id);
+            println!("closing window");
+            if mapp.windows.is_empty() {
+                iced::exit()
+            } else {
+                window::close(id)
+            }
+        }
     }
 }

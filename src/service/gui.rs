@@ -93,6 +93,7 @@ fn new(flags: GuiFlags) -> (MultiApp, Task<Message>) {
     let icon = window::icon::from_file_data(include_bytes!("../../icon.png"), None).ok();
     let (main_id, task) = window::open(window::Settings {
         icon,
+        exit_on_close_request: false,
         ..Default::default()
     });
     (
@@ -140,8 +141,16 @@ fn view<'a>(mapp: &'a MultiApp, id: window::Id) -> Element<'a, Message> {
     }
 }
 fn subscription(mapp: &MultiApp) -> Subscription<Message> {
+    let close_sub = iced::window::events().filter_map(|(id, event)| match event {
+        iced::window::Event::CloseRequested => {
+            println!("close requested");
+            Some(Message::CloseWindow(id))
+        }
+        _ => None,
+    });
+
     let Some(MultiAppKind::Normal(app)) = &mapp.windows.get(&mapp.main_id) else {
-        return Subscription::none();
+        return close_sub;
     };
     let bus = app.communication.event_receiver.watch(
         |_id, msg| Message::EventRecieved(msg),
@@ -154,7 +163,7 @@ fn subscription(mapp: &MultiApp) -> Subscription<Message> {
             .map(|handle| handle.watch(|_id, msg| msg, |id| Message::TaskFinished(id))),
     );
 
-    Subscription::batch(vec![bus, tasks])
+    Subscription::batch(vec![bus, tasks, close_sub])
 }
 fn theme(mapp: &MultiApp, id: window::Id) -> Theme {
     mapp.theme.clone()

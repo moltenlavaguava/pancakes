@@ -47,7 +47,10 @@ pub fn update(app: &mut App, msg: GuideMessage) -> Task<Message> {
         }
         GuideMessage::OpenGuide(g) => {
             // open window
-            let (_, task) = window::open(window::Settings::default());
+            let (_, task) = window::open(window::Settings {
+                exit_on_close_request: false,
+                ..window::Settings::default()
+            });
             task.map(move |i| Message::Window(i, MultiAppKind::Guide(g)))
         }
         GuideMessage::Back => {
