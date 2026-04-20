@@ -11,18 +11,18 @@ To use a Jupyter Notebook file, a `kernel` must be selected. To achieve this, do
 
 1. Click `Select Kernel`.
 
-![Select kernel](select-kernel.png)
+![Select kernel](select-kernel)
 
 2. If the `.venv` Python environment created by Pancakes does not immediately appear, click `Python Environments...`.
 
-![Select Python Environments](python-environments.png)
+![Select Python Environments](python-environments)
 
 3. Click the `.venv` created by Pancakes. It should be tagged as `recommended` and have a star. *To be super sure you have the right python, the path should contain `.venv`.  
 
-![Select .venv](select-venv.png)
+![Select .venv](select-venv)
 
 4. Run the first code cell. If you are prompted to install the `ipykernel` package, click `Install`.
 
-![Download ipykernel](ipkernel-install.png)
+![Download ipykernel](ipkernel-install)
 
 5. Restart the kernel by clicking `Restart` near the top of the page, then run the code cell again. After this, clicking the `Run` button by code cells should execute the Python code within.
