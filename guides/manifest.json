@@ -22,5 +22,11 @@
         "name": "Using Pancakes for Windows (Start here!)",
         "pinned": true,
         "tags": ["Windows"]
+    },
+    {
+        "slug": "Using VS Code",
+        "name": "Getting Started With VS Code",
+        "pinned": true,
+        "tags": ["Universal", "VS Code"]
     }
 ]
