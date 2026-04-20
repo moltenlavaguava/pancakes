@@ -1,4 +1,7 @@
+use iced::window;
+
 use crate::service::gui::{
+    MultiAppKind,
     enums::{EventMessage, PathPythonState},
     structs::TaskId,
     sync::ReceiverHandle,
@@ -20,8 +23,10 @@ pub enum Message {
     RestartNeeded,
     Home,
     Log(String),
-    SaveLog,
     Dev,
     Link(String),
     DevMessage(DevMessage),
+    // 1st: window, 2nd: guide
+    Window(window::Id, MultiAppKind),
+    CloseWindow(window::Id),
 }

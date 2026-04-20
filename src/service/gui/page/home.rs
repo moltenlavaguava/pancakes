@@ -1,5 +1,5 @@
 use iced::widget::{column, container, space};
-use iced::{Alignment, Length, Padding};
+use iced::{Alignment, Length, Padding, Theme};
 use iced::{Element, widget::row};
 
 use crate::service::gui::enums::PathPythonState;
@@ -19,8 +19,7 @@ use crate::service::gui::widgets::text::{default_text, icon_text, title_text};
 use crate::service::gui::widgets::text_input::default_text_input;
 use crate::service::gui::{App, message::Message};
 
-pub fn view<'a>(app: &'a App) -> Element<'a, Message> {
-    let theme = &app.theme;
+pub fn view<'a>(app: &'a App, theme: &'a Theme) -> Element<'a, Message> {
     let header = row![
         title_text("Pancakes", theme, true, true),
         space().width(Length::Fill),

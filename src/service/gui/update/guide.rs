@@ -1,11 +1,12 @@
-use iced::Task;
+use iced::{Task, window};
 
-use crate::service::gui::{App, enums::Page, message::Message};
+use crate::service::gui::{App, MultiAppKind, enums::Page, message::Message};
 
 #[derive(Debug, Clone)]
 pub enum GuideMessage {
     SearchText(String),
     OpenGuide(u32), // guide id
+    Back,
 }
 
 impl Into<Message> for GuideMessage {
@@ -45,8 +46,12 @@ pub fn update(app: &mut App, msg: GuideMessage) -> Task<Message> {
             Task::none()
         }
         GuideMessage::OpenGuide(g) => {
-            app.data.page = Page::Guide(g);
-            Task::none()
+            // open window
+            let (_, task) = window::open(window::Settings::default());
+            task.map(move |i| Message::Window(i, MultiAppKind::Guide(g)))
+        }
+        GuideMessage::Back => {
+            todo!()
         }
     }
 }

@@ -1,12 +1,20 @@
-use iced::Task;
+use iced::{Task, window};
 
-use crate::service::gui::{App, enums::Page, message::Message};
+use crate::service::gui::{MultiApp, MultiAppKind, enums::Page, message::Message};
 
 pub mod dev;
 pub mod guide;
 pub mod install;
 
-pub fn update(app: &mut App, msg: Message) -> Task<Message> {
+pub fn update(mapp: &mut MultiApp, msg: Message) -> Task<Message> {
+    // get main window id and get the content there
+    let MultiAppKind::Normal(app) = mapp
+        .windows
+        .get_mut(&mapp.main_id)
+        .expect("Failed to get main window state")
+    else {
+        panic!("Main window state was incorrect type");
+    };
     match msg {
         Message::EventRecieved(msg) => {
             todo!()
@@ -55,10 +63,6 @@ pub fn update(app: &mut App, msg: Message) -> Task<Message> {
             app.logs.push(s);
             Task::none()
         }
-        Message::SaveLog => {
-            todo!();
-            Task::none()
-        }
         Message::Dev => {
             app.data.page = Page::Dev;
             Task::none()
@@ -69,5 +73,10 @@ pub fn update(app: &mut App, msg: Message) -> Task<Message> {
             Task::none()
         }
         Message::DevMessage(m) => dev::update(app, m),
+        Message::Window(_, _) => {
+            log::warn!("Window message update called twice");
+            Task::none()
+        }
+        Message::CloseWindow(id) => window::close(id),
     }
 }
