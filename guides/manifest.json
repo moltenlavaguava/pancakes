@@ -1,30 +1,30 @@
 [
     {
-        "slug": "Installing Packages",
+        "slug": "installing-packages",
         "name": "Installing Packages",
         "pinned": false,
         "tags": ["Universal"]
     },
     {
-        "slug": "Jupiter-notebook-guide",
+        "slug": "jupyter-notebook-guide",
         "name": "Getting Started with Juypter Notebooks",
         "pinned": false,
         "tags": ["Universal", "VS Code"]
     },
     {
-        "slug": "Mac Guide",
+        "slug": "mac-guide",
         "name": "Using Pancakes for Mac (Start here!)",
         "pinned": true,
         "tags": ["macOS"]
     },
     {
-        "slug": "Windows Guide",
+        "slug": "windows-guide",
         "name": "Using Pancakes for Windows (Start here!)",
         "pinned": true,
         "tags": ["Windows"]
     },
     {
-        "slug": "Using VS Code",
+        "slug": "using-vs-code",
         "name": "Getting Started With VS Code",
         "pinned": true,
         "tags": ["Universal", "VS Code"]
