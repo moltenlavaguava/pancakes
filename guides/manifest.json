@@ -30,8 +30,8 @@
         "tags": ["Universal", "VS Code"]
     },
     {
-        "slug": "mac-installation-guide.md",
-        "name": "Mac Instillation Guide",
+        "slug": "mac-installation-guide",
+        "name": "Mac Instillation Guide (Start Here)",
         "pinned": true,
         "tags": ["macOS"]
     }
