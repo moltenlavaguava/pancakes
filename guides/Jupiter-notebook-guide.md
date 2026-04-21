@@ -25,4 +25,6 @@ To use a Jupyter Notebook file, a `kernel` must be selected. To achieve this, do
 
 ![Download ipykernel](ipkernel-install)
 
+Note: When running the cell again, the program prompts you to install the `ipykernel` package again. Restart your computer then try again.
+
 5. Restart the kernel by clicking `Restart` near the top of the page, then run the code cell again. After this, clicking the `Run` button by code cells should execute the Python code within.
