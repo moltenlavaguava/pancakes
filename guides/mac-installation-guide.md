@@ -1,4 +1,4 @@
-# Installing Pancakes for macOS
+## Installing Pancakes for macOS
 
 Pancakes is not a verified program from Apple, so a few steps must be followed to allow Mac users to run Pancakes for the first time.
 
