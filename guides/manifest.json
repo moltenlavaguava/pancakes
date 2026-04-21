@@ -28,5 +28,12 @@
         "name": "Getting Started With VS Code",
         "pinned": true,
         "tags": ["Universal", "VS Code"]
+    },
+    {
+        "slug": "mac-installation-guide.md",
+        "name": "Mac Instillation Guide",
+        "pinned": true,
+        "tags": ["macOS"]
     }
+    
 ]
