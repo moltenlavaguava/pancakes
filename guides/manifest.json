@@ -1,9 +1,9 @@
 [
     {
-        "slug": "installing-packages",
-        "name": "Installing Packages",
+        "slug": "using-vs-code",
+        "name": "Getting Started With VS Code",
         "pinned": false,
-        "tags": ["Universal"]
+        "tags": ["Universal", "VS Code"]
     },
     {
         "slug": "jupyter-notebook-guide",
@@ -12,10 +12,10 @@
         "tags": ["Universal", "VS Code"]
     },
     {
-        "slug": "mac-guide",
-        "name": "Using Pancakes for Mac (Start here!)",
-        "pinned": true,
-        "tags": ["macOS"]
+        "slug": "installing-packages",
+        "name": "Installing Packages",
+        "pinned": false,
+        "tags": ["Universal"]
     },
     {
         "slug": "windows-guide",
@@ -24,9 +24,9 @@
         "tags": ["Windows"]
     },
     {
-        "slug": "using-vs-code",
-        "name": "Getting Started With VS Code",
-        "pinned": false,
-        "tags": ["Universal", "VS Code"]
+        "slug": "mac-guide",
+        "name": "Using Pancakes for Mac (Start here!)",
+        "pinned": true,
+        "tags": ["macOS"]
     }
 ]
